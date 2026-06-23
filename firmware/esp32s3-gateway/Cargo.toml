@@ -9,8 +9,6 @@ description = "ESP32-S3 Gateway - ESP-NOW Receiver + UART Bridge"
 [dependencies]
 protocol = { path = "../../protocol", default-features = false }
 esp-idf-svc = { workspace = true }
-esp-idf-hal = { workspace = true }
-esp-idf-sys = { workspace = true }
 anyhow = { workspace = true }
 postcard = { workspace = true, default-features = false, features = ["alloc"] }
 crc16 = { workspace = true }

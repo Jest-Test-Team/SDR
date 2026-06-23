@@ -13,5 +13,9 @@ crc16 = { workspace = true, default-features = false }
 cobs = { workspace = true, default-features = false }
 heapless = "0.8"
 
+[features]
+default = []
+std = []
+
 [dev-dependencies]
 anyhow = { workspace = true }

@@ -25,6 +25,7 @@ pub enum DecodeError {
     TooShort,
     CrcMismatch,
     Postcard,
+    VendorMismatch,
 }
 
 impl fmt::Display for DecodeError {
@@ -34,6 +35,7 @@ impl fmt::Display for DecodeError {
             DecodeError::TooShort => write!(f, "Frame too short for CRC"),
             DecodeError::CrcMismatch => write!(f, "CRC mismatch"),
             DecodeError::Postcard => write!(f, "Postcard deserialization error"),
+            DecodeError::VendorMismatch => write!(f, "ESP-NOW vendor ID mismatch"),
         }
     }
 }
