@@ -1,16 +1,16 @@
 #![no_main]
 
 use core::cell::RefCell;
+use std::sync::Mutex;
 
 use esp_idf_svc::espnow::{EspNow, ReceiveInfo};
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
 use esp_idf_svc::hal::io::Write;
-use esp_idf_svc::hal::prelude::*;
+use esp_idf_svc::hal::units::Hertz;
 use esp_idf_svc::hal::uart::UartDriver;
 use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
-use esp_idf_svc::sys;
 use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
 use heapless::Deque;
 use protocol::{decode_espnow, encode_frame, ESP_NOW_VENDOR_ID};
@@ -21,8 +21,8 @@ const MAX_FRAME: usize = 256;
 
 type FrameBuf = heapless::Vec<u8, MAX_FRAME>;
 
-static PENDING: esp_idf_svc::hal::interrupt::Mutex<RefCell<Deque<FrameBuf, MAX_PENDING>>> =
-    esp_idf_svc::hal::interrupt::Mutex::new(RefCell::new(Deque::new()));
+static PENDING: Mutex<RefCell<Deque<FrameBuf, MAX_PENDING>>> =
+    Mutex::new(RefCell::new(Deque::new()));
 
 fn enqueue_uart_frame(data: &[u8]) {
     let Ok(mut cell) = PENDING.lock() else {
@@ -42,22 +42,22 @@ fn enqueue_uart_frame(data: &[u8]) {
 
 fn drain_to_uart(uart: &mut UartDriver<'_>) {
     loop {
-        let frame = {
+        let pending: Option<FrameBuf> = {
             let Ok(cell) = PENDING.lock() else {
                 return;
             };
             cell.borrow_mut().pop_front()
         };
-        let Some(frame) = frame else {
+        let Some(uart_frame) = pending else {
             break;
         };
-        if let Err(e) = uart.write_all(&frame) {
+        if let Err(e) = uart.write_all(&uart_frame) {
             log::error!("UART write failed: {:?}", e);
         }
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 fn main() -> ! {
     EspLogger::initialize_default();
     log::info!("ESP32-S3 Gateway starting");
@@ -74,11 +74,7 @@ fn main() -> ! {
     .unwrap();
     wifi.start().unwrap();
 
-    unsafe {
-        sys::esp_wifi_set_ps(sys::wifi_ps_type_t_WIFI_PS_NONE);
-    }
-
-    let esp_now = EspNow::new(&wifi).unwrap();
+    let esp_now = EspNow::take().unwrap();
     esp_now
         .register_recv_cb(|info: &ReceiveInfo, data: &[u8]| {
             if data.first() != Some(&ESP_NOW_VENDOR_ID) {

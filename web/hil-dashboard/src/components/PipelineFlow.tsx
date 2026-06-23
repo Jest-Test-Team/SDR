@@ -1,10 +1,12 @@
 "use client";
 
 import type { PipelineSnapshot } from "@/lib/types";
-import { WaveformPanel } from "./WaveformPanel";
+import type { Dictionary } from "@/lib/i18n";
 
 interface PipelineFlowProps {
   snapshot: PipelineSnapshot | null;
+  copy: Dictionary["pipeline"];
+  title: string;
 }
 
 function MiniWave({ data, color }: { data: number[]; color: string }) {
@@ -25,43 +27,34 @@ function MiniWave({ data, color }: { data: number[]; color: string }) {
   );
 }
 
-export function PipelineFlow({ snapshot }: PipelineFlowProps) {
+export function PipelineFlow({ snapshot, copy, title }: PipelineFlowProps) {
   const wf = snapshot?.waveforms;
+  const waveforms = [
+    wf?.baseband ?? [],
+    wf?.rf_tx ?? [],
+    wf?.rf_rx ?? [],
+    wf?.magnitude ?? [],
+    [],
+  ];
+  const iconClasses = ["esp", "rf", "sdr", "zmq", "cp"];
+  const colors = ["#3ecf8e", "#f5a623", "#e8a838", "#4da3ff", "#b388ff"];
 
   return (
     <div className="pipeline-flow panel">
-      <div className="flow-node">
-        <div className="node-icon esp">S3</div>
-        <div className="node-label">ESP32-S3</div>
-        <div className="node-sub">原始指令</div>
-        <MiniWave data={wf?.baseband ?? []} color="#3ecf8e" />
-      </div>
-      <div className="flow-arrow">→</div>
-      <div className="flow-node">
-        <div className="node-icon rf">RF</div>
-        <div className="node-label">RF 空間</div>
-        <div className="node-sub">射頻調變 (+雜訊)</div>
-        <MiniWave data={wf?.rf_tx ?? []} color="#f5a623" />
-      </div>
-      <div className="flow-arrow">→</div>
-      <div className="flow-node">
-        <div className="node-icon sdr">SDR</div>
-        <div className="node-label">SDR 接收</div>
-        <div className="node-sub">RTL-SDR 模擬</div>
-        <MiniWave data={wf?.rf_rx ?? []} color="#e8a838" />
-      </div>
-      <div className="flow-arrow">→</div>
-      <div className="flow-node">
-        <div className="node-icon zmq">ZMQ</div>
-        <div className="node-label">ZMQ 管道</div>
-        <div className="node-sub">還原結果</div>
-        <MiniWave data={wf?.magnitude ?? []} color="#4da3ff" />
-      </div>
-      <div className="flow-arrow">→</div>
-      <div className="flow-node">
-        <div className="node-icon cp">CP</div>
-        <div className="node-label">控制層端</div>
-        <div className="node-sub">規則引擎</div>
+      <h3>{title}</h3>
+      <div className="flow-track">
+        {copy.nodes.map((node, index) => (
+          <div className="flow-step" key={node.label}>
+            <div className="flow-node">
+              <div className={`node-icon ${iconClasses[index]}`}>{node.icon}</div>
+              <div className="node-label">{node.label}</div>
+              <div className="node-sub">{node.sub}</div>
+              <MiniWave data={waveforms[index]} color={colors[index]} />
+              <p>{node.explanation}</p>
+            </div>
+            {index < copy.nodes.length - 1 && <div className="flow-arrow">→</div>}
+          </div>
+        ))}
       </div>
     </div>
   );

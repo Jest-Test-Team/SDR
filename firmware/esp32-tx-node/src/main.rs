@@ -7,7 +7,6 @@ use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
 use esp_idf_svc::hal::gpio::{PinDriver, Pull};
 use esp_idf_svc::hal::io::Read;
-use esp_idf_svc::hal::prelude::*;
 use esp_idf_svc::hal::uart::UartDriver;
 use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
@@ -125,7 +124,7 @@ fn poll_uart(uart: &mut UartDriver<'_>, line: &mut String<64>) {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 fn main() -> ! {
     EspLogger::initialize_default();
     log::info!("ESP32 TX Node starting (node_id={})", NODE_ID);
@@ -142,19 +141,12 @@ fn main() -> ! {
     .unwrap();
     wifi.start().unwrap();
 
-    unsafe {
-        sys::esp_wifi_set_ps(sys::wifi_ps_type_t_WIFI_PS_NONE);
-    }
-
-    let esp_now = EspNow::new(&wifi).unwrap();
+    let esp_now = EspNow::take().unwrap();
     let gateway_mac = parse_mac(GATEWAY_MAC);
 
-    let peer = PeerInfo {
-        peer_addr: gateway_mac,
-        lmk: None,
-        channel: None,
-        encrypt: false,
-    };
+    let mut peer = PeerInfo::default();
+    peer.peer_addr = gateway_mac;
+    peer.encrypt = false;
     esp_now.add_peer(peer).unwrap();
     log::info!(
         "ESP-NOW ready, gateway={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",

@@ -8,6 +8,7 @@ BAUD="${2:-460800}"
 export PATH="${HOME}/.cargo/bin:${PATH}"
 # shellcheck source=/dev/null
 source "${HOME}/export-esp.sh"
+export RUST_MIN_STACK=16777216
 
 cd "${ROOT}"
 

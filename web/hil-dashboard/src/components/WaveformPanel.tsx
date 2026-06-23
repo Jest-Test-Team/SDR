@@ -12,19 +12,23 @@ import {
 
 interface WaveformPanelProps {
   title: string;
+  description?: string;
   data: number[];
   color: string;
   yDomain?: [number, number];
   threshold?: number;
+  thresholdLabel?: string;
   unit?: string;
 }
 
 export function WaveformPanel({
   title,
+  description,
   data,
   color,
   yDomain,
   threshold,
+  thresholdLabel = "",
   unit = "",
 }: WaveformPanelProps) {
   const chartData = data.map((v, i) => ({ i, v }));
@@ -32,6 +36,7 @@ export function WaveformPanel({
   return (
     <div className="panel waveform-panel">
       <h3>{title}</h3>
+      {description && <p className="panel-note">{description}</p>}
       <ResponsiveContainer width="100%" height={180}>
         <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#333" />
@@ -52,7 +57,11 @@ export function WaveformPanel({
               y={threshold}
               stroke="#4da3ff"
               strokeDasharray="6 4"
-              label={{ value: `閾值: ${threshold}`, fill: "#4da3ff", fontSize: 10 }}
+              label={{
+                value: thresholdLabel ? `${thresholdLabel}: ${threshold}` : threshold,
+                fill: "#4da3ff",
+                fontSize: 10,
+              }}
             />
           )}
           <Line

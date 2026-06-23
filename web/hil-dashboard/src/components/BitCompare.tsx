@@ -1,19 +1,21 @@
 "use client";
 
 import type { BitAnalysis } from "@/lib/types";
+import type { Dictionary } from "@/lib/i18n";
 
 interface BitCompareProps {
   bits: BitAnalysis;
   packetOk: boolean;
   crcOk: boolean;
+  copy: Dictionary["bitCompare"];
 }
 
-export function BitCompare({ bits, packetOk, crcOk }: BitCompareProps) {
+export function BitCompare({ bits, packetOk, crcOk, copy }: BitCompareProps) {
   const status = packetOk
-    ? "✅ 封包完整"
+    ? copy.packetComplete
     : !crcOk
-      ? "❌ 封包損壞 (CRC Error)"
-      : "❌ 位元錯誤";
+      ? copy.crcError
+      : copy.bitError;
 
   const renderBits = (text: string, highlightErrors: boolean) => (
     <span className="bit-row">
@@ -32,16 +34,18 @@ export function BitCompare({ bits, packetOk, crcOk }: BitCompareProps) {
 
   return (
     <div className="panel bit-panel">
+      <h3>{copy.explanation.title}</h3>
+      <p className="panel-note">{copy.explanation.body}</p>
       <div className="bit-line">
-        <span className="label">原始位元：</span>
+        <span className="label">{copy.original}</span>
         {renderBits(bits.original, false)}
       </div>
       <div className="bit-line">
-        <span className="label">還原位元：</span>
+        <span className="label">{copy.recovered}</span>
         {renderBits(bits.recovered, true)}
       </div>
       <div className="bit-status">{status}</div>
-      <div className="ber">誤碼率 (BER)：{(bits.ber * 100).toFixed(0)}%</div>
+      <div className="ber">{copy.ber} {(bits.ber * 100).toFixed(0)}%</div>
     </div>
   );
 }
