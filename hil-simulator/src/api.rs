@@ -91,6 +91,14 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
         "events": state.events.read().await.clone(),
     });
 
+    if sender
+        .send(Message::Text(init.to_string()))
+        .await
+        .is_err()
+    {
+        return;
+    }
+
     let mut send_task = tokio::spawn(async move {
         while let Ok(snap) = rx.recv().await {
             let msg = serde_json::json!({ "type": "snapshot", "data": snap }).to_string();

@@ -1,0 +1,10 @@
+/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/deps/zmq_sys-7cbab22ea6dfb046.d: /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/lib.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/unix.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/errno.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/ffi.rs
+
+/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/deps/libzmq_sys-7cbab22ea6dfb046.rlib: /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/lib.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/unix.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/errno.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/ffi.rs
+
+/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/deps/libzmq_sys-7cbab22ea6dfb046.rmeta: /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/lib.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/unix.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/errno.rs /Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/ffi.rs
+
+/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/lib.rs:
+/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/unix.rs:
+/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/errno.rs:
+/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zmq-sys-0.11.0/src/ffi.rs:
