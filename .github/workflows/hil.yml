@@ -1,0 +1,54 @@
+name: Hardware-in-the-Loop Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly Monday 02:00 UTC
+
+jobs:
+  hil:
+    name: HIL Integration Tests
+    runs-on: [self-hosted, linux, esp32-hil]
+    timeout-minutes: 30
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify hardware access
+        run: |
+          ls -la /dev/ttyUSB* /dev/ttyACM* 2>/dev/null || true
+          dmesg | tail -20
+      - name: Flash TX Node (ESP32)
+        run: |
+          cargo build --release -p esp32-tx-node
+          espflash flash --port /dev/ttyUSB_TX target/xtensa-esp32-none-elf/release/esp32-tx-node
+      - name: Flash Gateway (ESP32-S3)
+        run: |
+          cargo build --release -p esp32s3-gateway
+          espflash flash --port /dev/ttyUSB_GW target/xtensa-esp32s3-none-elf/release/esp32s3-gateway
+      - name: Start Edge Gateway
+        run: |
+          cargo run -p edge-gateway --release &
+          echo $! > edge_gateway.pid
+          sleep 3
+      - name: Start Control Plane
+        run: |
+          cargo run -p control-plane --release &
+          echo $! > control_plane.pid
+          sleep 3
+      - name: Run HIL Tests
+        run: |
+          cargo test --test hil_test -- --nocapture 2>&1 | tee hil_results.log
+      - name: Stop Services
+        if: always()
+        run: |
+          kill $(cat edge_gateway.pid 2>/dev/null) 2>/dev/null || true
+          kill $(cat control_plane.pid 2>/dev/null) 2>/dev/null || true
+      - name: Upload HIL Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hil-results
+          path: |
+            hil_results.log
+            target/hil-results/

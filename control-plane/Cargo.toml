@@ -1,0 +1,22 @@
+[package]
+name = "control-plane"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+rust-version = { workspace = true }
+description = "Control Plane - Telemetry Processing & Rules Engine"
+
+[dependencies]
+protocol = { path = "../protocol" }
+anyhow = { workspace = true }
+postcard = { workspace = true }
+crc = { workspace = true }
+tokio = { workspace = true }
+zmq = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+config = { workspace = true }
+clap = { workspace = true }
+sled = { workspace = true }
+prometheus = { workspace = true }
+axum = { workspace = true }

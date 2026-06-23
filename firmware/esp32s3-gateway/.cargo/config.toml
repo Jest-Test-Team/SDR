@@ -1,0 +1,12 @@
+[build]
+target = "xtensa-esp32s3-none-elf"
+
+[target.xtensa-esp32s3-none-elf]
+runner = "espflash flash --monitor --port {{PORT}}"
+rustflags = [
+  "-C", "link-arg=-Tesp32s3.ld",
+  "-C", "link-arg=--gc-sections",
+]
+
+[env]
+ESP_IDF_TOOLS_INSTALL_DIR = "/opt/esp/idf"

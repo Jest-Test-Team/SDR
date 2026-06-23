@@ -1,0 +1,42 @@
+[workspace]
+resolver = "2"
+members = [
+    "protocol",
+    "firmware/esp32-tx-node",
+    "firmware/esp32s3-gateway",
+    "edge-gateway",
+    "control-plane",
+]
+exclude = []
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+rust-version = "1.82"
+
+[workspace.dependencies]
+# Core
+anyhow = "1.0"
+thiserror = "1.0"
+tracing = { version = "0.1", features = ["std"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
+serde = { version = "1.0", features = ["derive"] }
+postcard = "1.0"
+crc = "3.0"
+cobs = "0.2"
+config = "0.14"
+tokio = { version = "1.40", features = ["full", "rt-multi-thread"] }
+zmq = "0.9"
+
+# Embedded (esp-idf-svc)
+esp-idf-svc = { version = "0.49", features = ["binstart", "wifi", "esp-now", "log", "experimental"] }
+esp-idf-hal = "0.49"
+esp-idf-sys = { version = "0.49", features = ["binstart"] }
+
+# PC side
+tokio-serial = "6.0"
+clap = { version = "4.5", features = ["derive", "env"] }
+sled = "0.34"
+prometheus = "0.13"
+axum = "0.7"

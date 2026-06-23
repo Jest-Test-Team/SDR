@@ -1,0 +1,23 @@
+[package]
+name = "edge-gateway"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+rust-version = { workspace = true }
+description = "Edge Gateway - UART to ZMQ Bridge"
+
+[dependencies]
+protocol = { path = "../protocol" }
+anyhow = { workspace = true }
+postcard = { workspace = true }
+crc = { workspace = true }
+cobs = { workspace = true }
+tokio = { workspace = true }
+tokio-serial = { workspace = true }
+zmq = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+config = { workspace = true }
+clap = { workspace = true }
+axum = { workspace = true }
+prometheus = { workspace = true }

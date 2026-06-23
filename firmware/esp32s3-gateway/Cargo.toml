@@ -1,0 +1,22 @@
+[package]
+name = "esp32s3-gateway"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+rust-version = { workspace = true }
+description = "ESP32-S3 Gateway - ESP-NOW Receiver + UART Bridge"
+
+[dependencies]
+protocol = { path = "../../protocol", default-features = false }
+esp-idf-svc = { workspace = true }
+esp-idf-hal = { workspace = true }
+esp-idf-sys = { workspace = true }
+anyhow = { workspace = true }
+postcard = { workspace = true, default-features = false, features = ["alloc"] }
+crc = { workspace = true }
+cobs = { workspace = true }
+heapless = "0.8"
+log = "0.4"
+
+[build-dependencies]
+esp-idf-svc = { workspace = true }
