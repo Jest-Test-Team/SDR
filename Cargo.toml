@@ -6,6 +6,7 @@ members = [
     "firmware/esp32s3-gateway",
     "edge-gateway",
     "control-plane",
+    "hil-simulator",
 ]
 
 [workspace.package]

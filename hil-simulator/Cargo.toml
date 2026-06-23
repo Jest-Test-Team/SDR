@@ -1,0 +1,32 @@
+[package]
+name = "hil-simulator"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+rust-version = { workspace = true }
+description = "ESP32-S3 to SDR HIL simulator (software mode)"
+
+[lib]
+name = "hil_simulator"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hil-simulator"
+path = "src/main.rs"
+
+[dependencies]
+protocol = { path = "../protocol" }
+anyhow = { workspace = true }
+axum = { workspace = true, features = ["ws"] }
+clap = { workspace = true }
+futures-util = "0.3"
+serde = { workspace = true, features = ["derive", "std"] }
+serde_json = "1.0"
+tokio = { workspace = true }
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+zmq = { workspace = true }
+
+[dev-dependencies]
+tokio-tungstenite = "0.24"
