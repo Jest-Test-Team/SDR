@@ -4,3 +4,5 @@
 /target/xtensa-esp32s3-none-elf/release/.fingerprint
 /web/hil-dashboard/.next
 /web/hil-dashboard/node_modules
+/target/xtensa-esp32s3-espidf
+/.embuild
