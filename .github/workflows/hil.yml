@@ -12,8 +12,14 @@ jobs:
     timeout-minutes: 30
     env:
       CARGO_TERM_COLOR: always
+      HIL_ENABLED: "1"
+      HIL_TX_PORT: /dev/ttyUSB_TX
+      GW_PORT: /dev/ttyUSB_GW
+      HIL_DB_PATH: ./data/telemetry.db
     steps:
       - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libzmq3-dev pkg-config
       - name: Verify hardware access
         run: |
           ls -la /dev/ttyUSB* /dev/ttyACM* 2>/dev/null || true
@@ -33,12 +39,13 @@ jobs:
           sleep 3
       - name: Start Control Plane
         run: |
+          mkdir -p data
           cargo run -p control-plane --release &
           echo $! > control_plane.pid
           sleep 3
       - name: Run HIL Tests
         run: |
-          cargo test --test hil_test -- --nocapture 2>&1 | tee hil_results.log
+          cargo test -p control-plane --test hil -- --ignored --nocapture 2>&1 | tee hil_results.log
       - name: Stop Services
         if: always()
         run: |
@@ -49,6 +56,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: hil-results
-          path: |
-            hil_results.log
-            target/hil-results/
+          path: hil_results.log

@@ -1,99 +1,101 @@
 # RF Simulation Workspace - ESP32 Telemetry Pipeline
 
-End-to-end boolean command telemetry system using ESP32/ESP32-S3 with ESP-NOW, Rust firmware, and Rust control plane.
+End-to-end boolean command telemetry using ESP32/ESP32-S3 with ESP-NOW (hardware track) and GNU Radio / ZMQ injection (simulation track).
 
 ## Architecture
 
 ```
-┌─────────────┐     ESP-NOW (2.4GHz)     ┌──────────────────┐     UART      ┌──────────────┐     ZMQ PUB/SUB     ┌───────────────┐
-│ ESP32 ×2    │ ──────────────────────▶ │ ESP32-S3 Gateway │ ────────────▶ │ Edge Gateway │ ───────────────▶ │ Control Plane │
-│ (TX Nodes)  │   BoolCmd + Seq + CRC    │ (RX + Bridge)    │  COBS Frames  │ (UART→ZMQ)   │  TelemetryFrame │ (Rules/Store) │
-└─────────────┘                          └──────────────────┘               └──────────────┘                   └───────────────┘
+Hardware Track:
+  ESP32 TX (×2) --ESP-NOW--> ESP32-S3 Gateway --UART/COBS--> edge-gateway --ZMQ--> control-plane
+
+Simulation Track:
+  dsp-core/inject_zmq.py ------------------------------------ZMQ-------------> control-plane
 ```
+
+Both tracks publish the same COBS-wrapped `TelemetryFrame` on ZMQ.
 
 ## Hardware
 
 | Role | Device | Qty | Interface |
 |------|--------|-----|-----------|
-| TX Node | ESP32 (WROOM-32) | 2 | ESP-NOW |
-| Gateway | ESP32-S3 (WROOM-1U) | 1 | ESP-NOW + USB/UART |
+| TX Node | ESP32 (WROOM-32) | 2 | ESP-NOW + GPIO0 button + UART CLI |
+| Gateway | ESP32-S3 (WROOM-1U) | 1 | ESP-NOW + USB/UART @ 921600 |
+
+Compile-time env (firmware):
+
+- `GATEWAY_MAC` — gateway peer MAC (default `FF:FF:FF:FF:FF:FF`)
+- `NODE_ID` — TX node id (default `1`)
 
 ## Quick Start
 
 ### Prerequisites
 
-- Rust 1.82+ with `espup` toolchain
-- `cargo-espflash` for flashing
-- Two ESP32 + one ESP32-S3 with U.FL antennas
+- Rust 1.85+
+- `espup` + `cargo-espflash` for firmware
+- `libzmq` (`brew install zeromq pkgconf` on macOS, `apt install libzmq3-dev` on Linux)
+- Python 3 + `pyzmq` for simulation injector
 
 ### 1. Flash Firmware
 
 ```bash
-# Flash TX nodes (two ESP32s)
 ./scripts/flash_tx.sh /dev/ttyUSB0 460800 --monitor
-./scripts/flash_tx.sh /dev/ttyUSB2 460800 --monitor
-
-# Flash Gateway (ESP32-S3)
 ./scripts/flash_gw.sh /dev/ttyUSB1 921600 --monitor
 ```
+
+UART CLI on TX node: `TRIGGER` / `RELEASE`
 
 ### 2. Run Pipeline (PC)
 
 ```bash
-# One command starts both services
 ./scripts/run_local.sh
 ```
 
-Or manually:
-```bash
-# Terminal 1: Edge Gateway
-cargo run -p edge-gateway --release
+### 3. Simulate Without Hardware
 
-# Terminal 2: Control Plane
-cargo run -p control-plane --release
+```bash
+cargo run -p control-plane --release &
+python3 dsp-core/scripts/inject_zmq.py --replay-last
 ```
 
-### 3. Verify
+Expect `ACTION_TRIGGERED` in control-plane logs for unique `BoolCmd(true)` frames.
 
-- Press button on TX node → Control Plane logs `ACTION_TRIGGERED: BoolCmd(true)`
-- Check metrics at `http://localhost:9090/metrics`
-- Health at `http://localhost:8080/health`
+### 4. Verify
 
-## Development
+- Press GPIO0 or send `TRIGGER` on TX UART
+- Health: `http://localhost:8080/health` (control-plane), `http://localhost:8081/health` (edge-gateway)
+- Metrics: `/metrics` on the same ports
 
-### Build All
-```bash
-cargo build --workspace --release
+## Repository Layout
+
 ```
-
-### Test
-```bash
-cargo test --workspace --lib
+protocol/           Shared TelemetryFrame, COBS/UART + ESP-NOW framing, ReplayGuard
+firmware/           esp32-tx-node, esp32s3-gateway
+edge-gateway/       UART -> ZMQ PUB
+control-plane/      ZMQ SUB -> rules -> sled
+dsp-core/           inject_zmq.py, optional GNU Radio Docker image
+infrastructure/     Dockerfiles
 ```
-
-### Firmware Only
-```bash
-cargo build --release -p esp32-tx-node -p esp32s3-gateway
-```
-
-## Configuration
-
-Each service uses TOML config (see `config.toml.example` in each crate):
-- `edge-gateway`: UART port, baud, ZMQ endpoint
-- `control-plane`: ZMQ endpoint, DB path, rules
-
-## CI/CD
-
-- **CI**: `cargo check`, `clippy`, `fmt`, unit tests, firmware cross-compile
-- **HIL**: Self-hosted runner with physical hardware (manual/weekly)
 
 ## Protocol
 
-`protocol` crate defines:
-- `TelemetryFrame`: seq, timestamp, node_id, payload, crc16
-- `Payload::BoolCmd(bool)` - core PoC payload
-- COBS framing over UART
-- Postcard serialization for ESP-NOW
+| Layer | Format |
+|-------|--------|
+| ESP-NOW | `[vendor_id=0x1A][postcard \|\| crc16_le]` |
+| UART | `COBS(postcard \|\| crc16_le) + 0x00` |
+| ZMQ | Same COBS bytes as UART (without delimiter) |
+
+## Development
+
+```bash
+cargo test --workspace --lib
+cargo test -p control-plane --test sim_pipeline
+cargo build --release -p esp32-tx-node -p esp32s3-gateway
+```
+
+## CI/CD
+
+- **CI**: fmt, clippy, unit tests, sim_pipeline integration test, firmware cross-compile
+- **HIL**: Self-hosted runner (`esp32-hil`), weekly or manual (`HIL_ENABLED=1`)
 
 ## License
 

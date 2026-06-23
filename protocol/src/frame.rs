@@ -1,8 +1,5 @@
-#![no_std]
-
 extern crate alloc;
 
-use alloc::{vec, vec::Vec};
 use core::fmt;
 use serde::{Deserialize, Serialize};
 
@@ -43,7 +40,7 @@ impl fmt::Display for DecodeError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{encode_frame, decode_frame};
+    use crate::{decode_frame, encode_frame};
 
     #[test]
     fn test_roundtrip() {
@@ -83,7 +80,6 @@ mod tests {
         };
 
         let mut encoded = encode_frame(&frame).unwrap();
-        // Corrupt a byte
         if !encoded.is_empty() {
             encoded[0] ^= 0xFF;
         }

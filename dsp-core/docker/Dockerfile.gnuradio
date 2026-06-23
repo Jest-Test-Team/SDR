@@ -1,0 +1,4 @@
+FROM ghcr.io/gnuradio/gnuradio:3.10.12
+WORKDIR /workspace
+COPY . /workspace/dsp-core
+CMD ["bash", "-lc", "echo 'Mount dsp-core and run flowgraphs manually; use inject_zmq.py for protocol-level simulation.'"]

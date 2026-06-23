@@ -2,10 +2,9 @@
 
 extern crate alloc;
 
-use alloc::{vec, vec::Vec};
+use alloc::vec::Vec;
 
 pub use cobs;
-pub use crc16;
 pub use postcard;
 
 pub mod frame;
@@ -49,7 +48,7 @@ pub fn decode_espnow(data: &[u8]) -> Result<frame::TelemetryFrame, frame::Decode
 
 fn encode_payload(frame: &frame::TelemetryFrame) -> Result<Vec<u8>, postcard::Error> {
     let mut buf = postcard::to_allocvec(frame)?;
-    let crc = crc16::State::<crc16::XMODEM>::calculate(&buf);
+    let crc = crc16_xmodem(&buf);
     buf.extend_from_slice(&crc.to_le_bytes());
     Ok(buf)
 }
@@ -60,11 +59,26 @@ fn decode_payload(data: &[u8]) -> Result<frame::TelemetryFrame, frame::DecodeErr
     }
     let (payload, crc_bytes) = data.split_at(data.len() - 2);
     let expected_crc = u16::from_le_bytes([crc_bytes[0], crc_bytes[1]]);
-    let actual_crc = crc16::State::<crc16::XMODEM>::calculate(payload);
+    let actual_crc = crc16_xmodem(payload);
     if actual_crc != expected_crc {
         return Err(frame::DecodeError::CrcMismatch);
     }
     postcard::from_bytes(payload).map_err(|_| frame::DecodeError::Postcard)
+}
+
+fn crc16_xmodem(data: &[u8]) -> u16 {
+    let mut crc = 0u16;
+    for &byte in data {
+        crc ^= u16::from(byte) << 8;
+        for _ in 0..8 {
+            if crc & 0x8000 != 0 {
+                crc = (crc << 1) ^ 0x1021;
+            } else {
+                crc <<= 1;
+            }
+        }
+    }
+    crc
 }
 
 #[cfg(test)]

@@ -4,10 +4,10 @@ services:
   control-plane:
     build:
       context: .
-      dockerfile: Dockerfile.control-plane
+      dockerfile: infrastructure/Dockerfile.control-plane
     ports:
-      - "9090:9090"  # Prometheus metrics
-      - "8080:8080"  # Health check
+      - "9090:9090"
+      - "8080:8080"
     environment:
       - RUST_LOG=info
       - ZMQ_ENDPOINT=tcp://edge-gateway:5556
@@ -19,7 +19,7 @@ services:
   edge-gateway:
     build:
       context: .
-      dockerfile: Dockerfile.edge-gateway
+      dockerfile: infrastructure/Dockerfile.edge-gateway
     devices:
       - "/dev/ttyUSB1:/dev/ttyUSB1"
     environment:
@@ -28,8 +28,6 @@ services:
       - GW_BAUD=921600
       - ZMQ_ENDPOINT=tcp://0.0.0.0:5556
       - HEALTH_PORT=8081
-      - METRICS_PORT=9091
     ports:
       - "8081:8081"
-      - "9091:9091"
     privileged: true

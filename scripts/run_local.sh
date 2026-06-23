@@ -4,24 +4,26 @@ set -euo pipefail
 GW_PORT="${GW_PORT:-/dev/ttyUSB1}"
 GW_BAUD="${GW_BAUD:-921600}"
 ZMQ_ENDPOINT="${ZMQ_ENDPOINT:-tcp://127.0.0.1:5556}"
-HEALTH_PORT="${HEALTH_PORT:-8080}"
-METRICS_PORT="${METRICS_PORT:-9090}"
+EDGE_HEALTH_PORT="${EDGE_HEALTH_PORT:-8081}"
+CP_HEALTH_PORT="${CP_HEALTH_PORT:-8080}"
 
 export RUST_LOG="${RUST_LOG:-info}"
-export GW_PORT GW_BAUD ZMQ_ENDPOINT HEALTH_PORT METRICS_PORT
+export GW_PORT GW_BAUD ZMQ_ENDPOINT HEALTH_PORT="$EDGE_HEALTH_PORT"
 
 echo "Starting Edge Gateway (UART -> ZMQ)..."
 echo "  UART: $GW_PORT @ $GW_BAUD"
 echo "  ZMQ:  $ZMQ_ENDPOINT"
-echo "  Health: :$HEALTH_PORT"
-echo "  Metrics: :$METRICS_PORT"
+echo "  Health: :$EDGE_HEALTH_PORT"
 
 cargo run -p edge-gateway --release &
 EDGE_PID=$!
 
 sleep 2
 
+export HEALTH_PORT="$CP_HEALTH_PORT"
 echo "Starting Control Plane (ZMQ -> Processing)..."
+echo "  ZMQ:  $ZMQ_ENDPOINT"
+echo "  Health: :$CP_HEALTH_PORT"
 cargo run -p control-plane --release &
 CP_PID=$!
 
