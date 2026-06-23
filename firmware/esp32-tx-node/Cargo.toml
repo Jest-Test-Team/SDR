@@ -13,4 +13,4 @@ heapless = "0.8"
 log = "0.4"
 
 [build-dependencies]
-embuild = "0.33"
+embuild = { version = "0.33", features = ["espidf"] }

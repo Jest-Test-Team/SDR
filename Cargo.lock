@@ -904,9 +904,17 @@ dependencies = [
  "anyhow",
  "bitflags 1.3.2",
  "filetime",
+ "home",
  "log",
+ "regex",
+ "remove_dir_all",
+ "serde",
+ "serde_json",
  "shlex 1.3.0",
+ "strum 0.24.1",
+ "tempfile",
  "thiserror 1.0.69",
+ "which",
 ]
 
 [[package]]
