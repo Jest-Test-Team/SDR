@@ -13,7 +13,7 @@ esp-idf-hal = { workspace = true }
 esp-idf-sys = { workspace = true }
 anyhow = { workspace = true }
 postcard = { workspace = true, default-features = false, features = ["alloc"] }
-crc = { workspace = true }
+crc16 = { workspace = true }
 cobs = { workspace = true }
 heapless = "0.8"
 log = "0.4"

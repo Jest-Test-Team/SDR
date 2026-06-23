@@ -10,7 +10,7 @@ description = "Edge Gateway - UART to ZMQ Bridge"
 protocol = { path = "../protocol" }
 anyhow = { workspace = true }
 postcard = { workspace = true }
-crc = { workspace = true }
+crc16 = { workspace = true }
 cobs = { workspace = true }
 tokio = { workspace = true }
 tokio-serial = { workspace = true }

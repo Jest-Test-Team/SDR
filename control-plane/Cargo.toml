@@ -10,7 +10,7 @@ description = "Control Plane - Telemetry Processing & Rules Engine"
 protocol = { path = "../protocol" }
 anyhow = { workspace = true }
 postcard = { workspace = true }
-crc = { workspace = true }
+crc16 = { workspace = true }
 tokio = { workspace = true }
 zmq = { workspace = true }
 tracing = { workspace = true }
