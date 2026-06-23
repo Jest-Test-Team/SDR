@@ -9,7 +9,6 @@ const CARRIER_PERIOD: usize = 6;
 const CHART_POINTS: usize = 360;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
 pub enum TransmissionMode {
     EspNow,
     BleAdvertisement,
