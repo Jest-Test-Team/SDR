@@ -1,3 +1,6 @@
 /target/debug
 /target/release
 /target/release/.fingerprint
+/target/xtensa-esp32s3-none-elf/release/.fingerprint
+/web/hil-dashboard/.next
+/web/hil-dashboard/node_modules

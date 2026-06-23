@@ -28,11 +28,13 @@ export function HilDashboard() {
   const [snapshot, setSnapshot] = useState<PipelineSnapshot | null>(null);
   const [connected, setConnected] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [backendError, setBackendError] = useState<string | null>(null);
 
   const applySnapshot = useCallback((snap: PipelineSnapshot) => {
     setSnapshot(snap);
     setKpis(snap.kpis);
     setEvents((prev) => [snap.event, ...prev].slice(0, 50));
+    setBackendError(null);
   }, []);
 
   useEffect(() => {
@@ -40,16 +42,29 @@ export function HilDashboard() {
       .then((s) => {
         setConfig(s.config);
         setKpis(s.kpis);
+        setBackendError(null);
       })
-      .catch(console.error);
+      .catch(() => {
+        setBackendError(
+          "無法連線至 HIL 後端 (http://127.0.0.1:8090)。請在另一個終端執行：cargo run -p hil-simulator --release"
+        );
+      });
   }, []);
 
   useEffect(() => {
     const url = wsUrl();
     if (!url) return;
     const ws = new WebSocket(url);
-    ws.onopen = () => setConnected(true);
+    ws.onopen = () => {
+      setConnected(true);
+      setBackendError(null);
+    };
     ws.onclose = () => setConnected(false);
+    ws.onerror = () => {
+      setBackendError(
+        "WebSocket 連線失敗。請確認 hil-simulator 正在 :8090 執行。"
+      );
+    };
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data);
@@ -78,6 +93,8 @@ export function HilDashboard() {
     try {
       const snap = await triggerCommand(true);
       applySnapshot(snap);
+    } catch {
+      setBackendError("觸發失敗：後端未啟動或無法連線 (:8090)");
     } finally {
       setBusy(false);
     }
@@ -115,6 +132,12 @@ export function HilDashboard() {
           ))}
         </div>
       </header>
+
+      {backendError && (
+        <div className="backend-error panel" role="alert">
+          {backendError}
+        </div>
+      )}
 
       {tab === "hil" && (
         <>

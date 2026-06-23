@@ -276,6 +276,13 @@ body {
   cursor: not-allowed;
 }
 
+.backend-error {
+  border-color: var(--red);
+  color: #ffb4b4;
+  background: #2a1515;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 900px) {
   .charts-grid,
   .control-panel .controls,
