@@ -9,7 +9,7 @@ description = "Shared protocol definitions for ESP-NOW telemetry"
 [dependencies]
 serde = { workspace = true, default-features = false, features = ["derive", "alloc"] }
 postcard = { workspace = true, default-features = false, features = ["alloc"] }
-crc = { workspace = true, default-features = false }
+crc16 = { workspace = true, default-features = false }
 cobs = { workspace = true, default-features = false }
 heapless = "0.8"
 
