@@ -1,15 +1,6 @@
 use anyhow::{Context, Result};
-use std::sync::{
-    atomic::{AtomicU64, Ordering},
-};
 use tokio::sync::mpsc;
 use tracing::info;
-
-static FRAMES_PUBLISHED: AtomicU64 = AtomicU64::new(0);
-
-pub fn frames_published() -> u64 {
-    FRAMES_PUBLISHED.load(Ordering::Relaxed)
-}
 
 pub async fn run_publisher(endpoint: String, mut rx: mpsc::Receiver<Vec<u8>>) -> Result<()> {
     let endpoint = endpoint.clone();
@@ -21,7 +12,7 @@ pub async fn run_publisher(endpoint: String, mut rx: mpsc::Receiver<Vec<u8>>) ->
 
         while let Some(frame) = rx.blocking_recv() {
             socket.send(&frame, 0).context("ZMQ send")?;
-            FRAMES_PUBLISHED.fetch_add(1, Ordering::Relaxed);
+            crate::metrics::FRAMES_PUBLISHED.inc();
         }
         Ok(())
     })

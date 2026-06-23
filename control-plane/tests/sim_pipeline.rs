@@ -54,7 +54,11 @@ fn sim_pipeline_zmq_roundtrip() {
     let store = Arc::new(TelemetryStore::open(tmp.path().join("telemetry.db")).unwrap());
     let replay = Arc::new(Mutex::new(ReplayGuard::new()));
 
-    let endpoint = "inproc://sim-pipeline";
+    let endpoint = "tcp://127.0.0.1:15556";
+    let ctx = zmq::Context::new();
+    let sock = ctx.socket(zmq::PUB).unwrap();
+    sock.bind(endpoint).unwrap();
+
     let replay_clone = replay.clone();
     let store_clone = store.clone();
     let handle = std::thread::spawn(move || {
@@ -67,12 +71,7 @@ fn sim_pipeline_zmq_roundtrip() {
         .expect("subscriber");
     });
 
-    std::thread::sleep(Duration::from_millis(100));
-
-    let ctx = zmq::Context::new();
-    let sock = ctx.socket(zmq::PUB).unwrap();
-    sock.bind(endpoint).unwrap();
-    std::thread::sleep(Duration::from_millis(100));
+    std::thread::sleep(Duration::from_millis(500));
 
     let f1 = encode_frame(&sample_frame(1, true)).unwrap();
     let f2 = encode_frame(&sample_frame(2, true)).unwrap();
@@ -80,10 +79,9 @@ fn sim_pipeline_zmq_roundtrip() {
     sock.send(&f2, 0).unwrap();
     sock.send(&f2, 0).unwrap();
 
-    std::thread::sleep(Duration::from_millis(300));
+    handle.join().expect("subscriber thread");
     assert!(store.contains_action(1, 1));
     assert!(store.contains_action(1, 2));
-    handle.join().expect("subscriber thread");
 }
 
 #[test]

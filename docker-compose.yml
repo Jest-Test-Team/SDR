@@ -31,3 +31,10 @@ services:
     ports:
       - "8081:8081"
     privileged: true
+
+  gnuradio-sim:
+    build:
+      context: ./dsp-core
+      dockerfile: docker/Dockerfile.gnuradio
+    network_mode: host
+    profiles: ["sim"]

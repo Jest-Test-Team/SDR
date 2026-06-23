@@ -56,7 +56,10 @@ pub async fn run_uart_reader(
                         return Ok(());
                     }
                 }
-                Err(e) => warn!("frame decode error: {}", e),
+                Err(e) => {
+                    crate::metrics::DECODE_ERRORS.inc();
+                    warn!("frame decode error: {}", e);
+                }
             }
         }
     }
