@@ -26,6 +26,25 @@ Compile-time env (firmware):
 - `GATEWAY_MAC` — gateway peer MAC (default `FF:FF:FF:FF:FF:FF`)
 - `NODE_ID` — TX node id (default `1`)
 
+## HIL 模擬器儀表板（ESP32 軟體模擬）
+
+動態視覺化 ESP32-S3 → RF → SDR → ZMQ → 控制層管線（真實 SDR 版本尚未啟用）。
+
+```bash
+# 終端 1：後端 API + 訊號模擬
+cargo run -p hil-simulator --release
+
+# 終端 2：Next.js 儀表板
+cd web/hil-dashboard && npm install && npm run dev
+```
+
+或一鍵啟動：`./scripts/run_hil_dashboard.sh`
+
+- 後端：http://localhost:8090（REST + WebSocket `/ws/live`）
+- 前端：http://localhost:3000
+- 可調 SNR、雜訊、閾值、傳輸模式，即時顯示 OOK 波形與 BER/CRC 分析
+- 「發送布林指令」成功時可選發布至 ZMQ（`ZMQ_ENDPOINT`）供 control-plane 接收
+
 ## Quick Start
 
 ### Prerequisites

@@ -44,6 +44,8 @@ jobs:
         run: cargo test --workspace --lib
       - name: Integration tests
         run: cargo test -p control-plane --test sim_pipeline
+      - name: HIL simulator tests
+        run: cargo test -p hil-simulator --lib
 
   build-firmware:
     name: Build Firmware (Cross-compile)

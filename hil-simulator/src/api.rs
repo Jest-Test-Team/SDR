@@ -12,7 +12,7 @@ use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 
 use crate::sim::{Kpis, SimConfig, TransmissionMode};
-use crate::state::AppState;
+use crate::state::SharedState;
 
 #[derive(Serialize)]
 struct StatusResponse {
@@ -26,7 +26,7 @@ struct TriggerRequest {
     value: Option<bool>,
 }
 
-pub fn router(state: AppState) -> Router {
+pub fn router(state: SharedState) -> Router {
     Router::new()
         .route("/api/v1/status", get(get_status))
         .route("/api/v1/config", get(get_config).put(update_config))
@@ -36,7 +36,7 @@ pub fn router(state: AppState) -> Router {
         .with_state(state)
 }
 
-async fn get_status(State(state): State<AppState>) -> Json<StatusResponse> {
+async fn get_status(State(state): State<SharedState>) -> Json<StatusResponse> {
     Json(StatusResponse {
         hardware_mode: "esp32_simulation",
         kpis: state.kpis.read().await.clone(),
@@ -44,12 +44,12 @@ async fn get_status(State(state): State<AppState>) -> Json<StatusResponse> {
     })
 }
 
-async fn get_config(State(state): State<AppState>) -> Json<SimConfig> {
+async fn get_config(State(state): State<SharedState>) -> Json<SimConfig> {
     Json(state.config.read().await.clone())
 }
 
 async fn update_config(
-    State(state): State<AppState>,
+    State(state): State<SharedState>,
     Json(mut config): Json<SimConfig>,
 ) -> Result<Json<SimConfig>, StatusCode> {
     if config.data_bits.chars().all(|c| c != '0' && c != '1') {
@@ -63,7 +63,7 @@ async fn update_config(
 }
 
 async fn trigger(
-    State(state): State<AppState>,
+    State(state): State<SharedState>,
     body: Option<Json<TriggerRequest>>,
 ) -> Json<serde_json::Value> {
     let value = body.and_then(|b| b.value).unwrap_or(true);
@@ -71,15 +71,15 @@ async fn trigger(
     Json(serde_json::json!({ "ok": true, "snapshot": snap }))
 }
 
-async fn get_events(State(state): State<AppState>) -> Json<Vec<crate::sim::TelemetryEvent>> {
+async fn get_events(State(state): State<SharedState>) -> Json<Vec<crate::sim::TelemetryEvent>> {
     Json(state.events.read().await.clone())
 }
 
-async fn ws_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
+async fn ws_handler(ws: WebSocketUpgrade, State(state): State<SharedState>) -> impl IntoResponse {
     ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
 
-async fn handle_socket(socket: WebSocket, state: AppState) {
+async fn handle_socket(socket: WebSocket, state: SharedState) {
     let (mut sender, mut receiver) = socket.split();
     let mut rx = state.tx.subscribe();
 

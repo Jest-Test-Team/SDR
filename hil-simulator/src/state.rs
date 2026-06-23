@@ -1,11 +1,11 @@
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 
 use protocol::ReplayGuard;
 use tokio::sync::{broadcast, RwLock};
 
 use crate::sim::{PipelineSnapshot, SimConfig, Kpis, TelemetryEvent};
 
-#[derive(Clone)]
 pub struct AppState {
     pub config: RwLock<SimConfig>,
     pub kpis: RwLock<Kpis>,
@@ -16,10 +16,12 @@ pub struct AppState {
     pub zmq_endpoint: String,
 }
 
+pub type SharedState = Arc<AppState>;
+
 impl AppState {
-    pub fn new(zmq_endpoint: String) -> Self {
+    pub fn new(zmq_endpoint: String) -> SharedState {
         let (tx, _) = broadcast::channel(32);
-        Self {
+        Arc::new(Self {
             config: RwLock::new(SimConfig::default()),
             kpis: RwLock::new(Kpis::default()),
             events: RwLock::new(Vec::new()),
@@ -27,10 +29,10 @@ impl AppState {
             seq: AtomicU32::new(0),
             tx,
             zmq_endpoint,
-        }
+        })
     }
 
-    pub async fn trigger(&self, value: bool) -> PipelineSnapshot {
+    pub async fn trigger(self: &Arc<Self>, value: bool) -> PipelineSnapshot {
         let config = self.config.read().await.clone();
         let seq = self.seq.fetch_add(1, Ordering::Relaxed) + 1;
 
@@ -51,9 +53,7 @@ impl AppState {
 
         if snap.packet_ok {
             if let Some(ref frame) = snap.frame {
-                if let Ok(true) =
-                    crate::sim::publish_zmq(&self.zmq_endpoint, frame)
-                {
+                if crate::sim::publish_zmq(&self.zmq_endpoint, frame).unwrap_or(false) {
                     snap.zmq_published = true;
                 }
             }
