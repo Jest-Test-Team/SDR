@@ -1,7 +1,7 @@
-export type TransmissionMode = "esp_now" | "ble_advertisement" | "ook433_mhz";
+export type TransmissionMode = "esp_now" | "ble_advertisement" | "ook433_mhz" | "software_sim";
 
 export interface SimConfig {
-  mode: "EspNow" | "BleAdvertisement" | "Ook433Mhz";
+  mode: "EspNow" | "BleAdvertisement" | "Ook433Mhz" | "SoftwareSim";
   tx_power_dbm: number;
   snr_db: number;
   filter_bw_mhz: number;

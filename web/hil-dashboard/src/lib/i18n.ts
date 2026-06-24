@@ -94,7 +94,7 @@ export type Dictionary = {
     applyFirmware: string;
     firmwareApplied: string;
     firmwareApplyError: string;
-    modeOptions: Record<"EspNow" | "BleAdvertisement" | "Ook433Mhz", string>;
+    modeOptions: Record<"EspNow" | "BleAdvertisement" | "Ook433Mhz" | "SoftwareSim", string>;
   };
   concepts: Explanation[];
   live: {
@@ -312,6 +312,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         EspNow: "ESP-NOW",
         BleAdvertisement: "BLE Advertisement",
         Ook433Mhz: "433 MHz OOK",
+        SoftwareSim: "Software Sim Protocol",
       },
     },
     concepts: [
@@ -551,6 +552,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         EspNow: "ESP-NOW",
         BleAdvertisement: "BLE Advertisement",
         Ook433Mhz: "433 MHz OOK",
+        SoftwareSim: "Software Sim Protocol",
       },
     },
     concepts: [

@@ -128,5 +128,6 @@ pub fn mode_label(mode: TransmissionMode) -> &'static str {
         TransmissionMode::EspNow => "ESP-NOW",
         TransmissionMode::BleAdvertisement => "BLE Advertisement",
         TransmissionMode::Ook433Mhz => "433MHz OOK",
+        TransmissionMode::SoftwareSim => "SoftwareSim",
     }
 }

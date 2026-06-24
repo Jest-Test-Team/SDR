@@ -21,6 +21,7 @@ const MODE_OPTIONS: { value: SimConfig["mode"] }[] = [
   { value: "EspNow" },
   { value: "BleAdvertisement" },
   { value: "Ook433Mhz" },
+  { value: "SoftwareSim" },
 ];
 
 function KpiCard({

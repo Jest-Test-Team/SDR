@@ -16,6 +16,7 @@ pub enum TransmissionMode {
     EspNow,
     BleAdvertisement,
     Ook433Mhz,
+    SoftwareSim,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -168,6 +169,33 @@ fn simulate_waveforms(bits: &[bool], config: &SimConfig) -> (Waveforms, Vec<bool
     (waveforms, recovered)
 }
 
+fn simulate_software_protocol(bits: &[bool], config: &SimConfig) -> (Waveforms, Vec<bool>) {
+    let mut baseband = Vec::with_capacity(bits.len() * SAMPLES_PER_BIT);
+    let mut rf_tx = Vec::with_capacity(bits.len() * SAMPLES_PER_BIT);
+    let mut rf_rx = Vec::with_capacity(bits.len() * SAMPLES_PER_BIT);
+    let mut magnitude = Vec::with_capacity(bits.len() * SAMPLES_PER_BIT);
+
+    for &bit in bits {
+        for _ in 0..SAMPLES_PER_BIT {
+            let level = if bit { 1.0 } else { 0.0 };
+            baseband.push(level);
+            rf_tx.push(level);
+            rf_rx.push(level);
+            magnitude.push(level);
+        }
+    }
+
+    let waveforms = Waveforms {
+        baseband: downsample(&baseband, CHART_POINTS),
+        rf_tx: downsample(&rf_tx, CHART_POINTS),
+        rf_rx: downsample(&rf_rx, CHART_POINTS),
+        magnitude: downsample(&magnitude, CHART_POINTS),
+        threshold: 0.5_f32.max(config.threshold),
+    };
+
+    (waveforms, bits.to_vec())
+}
+
 fn slice_bits(magnitude: &[f32], samples_per_bit: usize, threshold: f32) -> Vec<bool> {
     magnitude
         .chunks(samples_per_bit)
@@ -216,7 +244,12 @@ pub fn run_trigger(
         parse_bits("10110010")
     };
 
-    let (waveforms, recovered_bits) = simulate_waveforms(&bit_pattern, config);
+    let software_sim = matches!(config.mode, TransmissionMode::SoftwareSim);
+    let (waveforms, recovered_bits) = if software_sim {
+        simulate_software_protocol(&bit_pattern, config)
+    } else {
+        simulate_waveforms(&bit_pattern, config)
+    };
     let bits = analyze_bits(&bit_pattern, &recovered_bits);
 
     let frame = TelemetryFrame {
@@ -235,12 +268,24 @@ pub fn run_trigger(
         crc_ok = decode_frame(&wire).is_ok();
     }
 
-    let packet_ok = bits.ber == 0.0 && crc_ok && wire_ok;
+    let packet_ok = if software_sim {
+        true
+    } else {
+        bits.ber == 0.0 && crc_ok && wire_ok
+    };
     let replay_rejected = config.replay_guard && last_seq.is_some_and(|s| seq <= s);
 
-    let latency = (20 + (bits.error_indices.len() as u32 * 5) + if packet_ok { 5 } else { 30 })
-        .clamp(15, 120);
-    let rssi = config.tx_power_dbm - 40.0 + config.snr_db * 0.2;
+    let latency = if software_sim {
+        5
+    } else {
+        (20 + (bits.error_indices.len() as u32 * 5) + if packet_ok { 5 } else { 30 })
+            .clamp(15, 120)
+    };
+    let rssi = if software_sim {
+        0.0
+    } else {
+        config.tx_power_dbm - 40.0 + config.snr_db * 0.2
+    };
 
     kpis.packets_sent += 1;
     if packet_ok && !replay_rejected {
@@ -259,6 +304,8 @@ pub fn run_trigger(
 
     let status = if replay_rejected {
         "重放拒絕"
+    } else if software_sim {
+        "軟體協定傳輸"
     } else if packet_ok {
         "封包完整"
     } else if !crc_ok {
@@ -287,7 +334,11 @@ pub fn run_trigger(
 
     PipelineSnapshot {
         mode: config.mode,
-        hardware_mode: "esp32_simulation".to_string(),
+        hardware_mode: if software_sim {
+            "software_sim_protocol".to_string()
+        } else {
+            "esp32_simulation".to_string()
+        },
         waveforms,
         bits,
         packet_ok: packet_ok && !replay_rejected,

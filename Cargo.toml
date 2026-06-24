@@ -4,6 +4,7 @@ members = [
     "protocol",
     "firmware/esp32-tx-node",
     "firmware/esp32s3-gateway",
+    "firmware/software-sim",
     "edge-gateway",
     "control-plane",
     "hil-simulator",
