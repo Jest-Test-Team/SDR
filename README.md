@@ -74,7 +74,7 @@ ls /dev/cu.* | grep -v Bluetooth
 **ESP32-S3 Gateway** (already flashed example MAC `14:C1:9F:CB:51:B4`):
 
 ```bash
-./scripts/flash_gw.sh /dev/cu.usbserial-110 115200 --monitor
+./scripts/flash_gw.sh /dev/cu.usbmodem1101 115200 --monitor
 ```
 
 **ESP32 TX Node** (×2, set unique `NODE_ID`; point `GATEWAY_MAC` at gateway):
@@ -82,23 +82,38 @@ ls /dev/cu.* | grep -v Bluetooth
 ```bash
 # TX #1
 GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=1 \
-  ./scripts/flash_tx.sh /dev/cu.usbserial-TX1 115200 --monitor
+  ./scripts/flash_tx.sh /dev/cu.usbserial-57860443631 115200 --monitor
 
 # TX #2 (unplug gateway, plug second ESP32, use its port)
 GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=2 TX_POWER_DBM=10 \
-  ./scripts/flash_tx.sh /dev/cu.usbserial-TX2 115200 --monitor
+  ./scripts/flash_tx.sh /dev/cu.usbserial-57860443631 115200 --monitor
 ```
 
 Notes:
 
-- Replace port names with your actual `/dev/cu.usbserial-*` (do **not** use placeholder `XXXX`).
+- Replace port names with the actual output of `ls /dev/cu.* | grep -E 'usb(modem|serial)'`. If only one USB cable is connected, the visible port is the board currently plugged in.
+- On macOS, `./scripts/flash_gw.sh` auto-detects the first `/dev/cu.usbmodem*` when no port is passed, and `./scripts/flash_tx.sh` auto-detects the first `/dev/cu.usbserial*` when no port is passed.
+- If a port disappears after `pkill`, the board using that port is no longer connected or has re-enumerated. Run the `ls /dev/cu.*` command again and use the new visible port.
 - If flash fails at high baud, use `115200` for `espflash`; on macOS, `run_local.sh` uses `115200` for `/dev/cu.usbmodem*` automatically.
 - The TX node sends `BoolCmd(true)` on BOOT press and `BoolCmd(false)` heartbeats about every 2 seconds.
+
+### Dashboard controls vs. physical hardware
+
+The two-board ESP-NOW path receives decoded packets, not raw RF samples. Some dashboard controls can therefore be applied to firmware, while others require SDR/RF hardware:
+
+| Control | How to make it physically real |
+| --- | --- |
+| SNR | Add an RF attenuator, distance-controlled setup, programmable attenuator, or estimate channel quality from RSSI/packet loss. |
+| Noise level | Add an RF noise source, SDR signal injection, or a controlled interference transmitter. |
+| Filter bandwidth | Add an SDR receiver path such as RTL-SDR, USRP, or GNU Radio, then filter raw samples in DSP. |
+| Decision threshold | Add an SDR/OOK demodulator path where firmware or backend code slices raw magnitude samples. |
+| non-ESP-NOW mode | Implement BLE firmware mode, or add 433 MHz OOK TX/RX hardware. |
+| replay guard | Make this a runtime backend/control-plane toggle; it is a packet-rule control, not an RF firmware setting. |
 
 ### 2. Run Pipeline (PC)
 
 ```bash
-GW_PORT=/dev/cu.usbserial-110 GW_BAUD=921600 ./scripts/run_local.sh
+GW_PORT=/dev/cu.usbmodem1101 GW_BAUD=115200 ./scripts/run_local.sh
 ```
 
 ### 3. Simulate Without Hardware

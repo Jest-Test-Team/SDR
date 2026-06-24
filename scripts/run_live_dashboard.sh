@@ -6,6 +6,19 @@ DASHBOARD_PORT="${DASHBOARD_PORT:-3001}"
 LIVE_CP_URL="${LIVE_CP_URL:-http://127.0.0.1:8092}"
 LIVE_EDGE_URL="${LIVE_EDGE_URL:-http://127.0.0.1:8081}"
 
+port_in_use() {
+  local port="$1"
+  lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1
+}
+
+if port_in_use "${DASHBOARD_PORT}"; then
+  original_port="${DASHBOARD_PORT}"
+  while port_in_use "${DASHBOARD_PORT}"; do
+    DASHBOARD_PORT=$((DASHBOARD_PORT + 1))
+  done
+  echo "WARN: dashboard port :${original_port} is busy; using :${DASHBOARD_PORT}"
+fi
+
 wait_for_health() {
   local url="$1"
   local name="$2"
@@ -48,4 +61,5 @@ export PORT="$DASHBOARD_PORT"
 if [[ ! -d node_modules ]]; then
   npm install
 fi
-npm run dev
+rm -rf .next
+npm run dev -- -H 127.0.0.1

@@ -5,7 +5,11 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=flash_helpers.sh
 source "${ROOT}/scripts/flash_helpers.sh"
 
-PORT="${1:-/dev/ttyUSB1}"
+if [[ "$(uname -s)" == "Darwin" && "${1:-}" == "" ]]; then
+  PORT="$(detect_gateway_port || true)"
+else
+  PORT="${1:-/dev/ttyUSB1}"
+fi
 BAUD="${2:-921600}"
 
 preflight_flash_port "${PORT}" "Gateway" || exit 1

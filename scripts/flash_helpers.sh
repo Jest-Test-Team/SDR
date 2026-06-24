@@ -16,6 +16,16 @@ detect_gateway_port() {
   return 1
 }
 
+detect_tx_port() {
+  local serial
+  serial="$(ls /dev/cu.usbserial* 2>/dev/null | head -1 || true)"
+  if [[ -n "${serial}" ]]; then
+    echo "${serial}"
+    return 0
+  fi
+  return 1
+}
+
 port_is_busy() {
   local port="$1"
   lsof "${port}" 2>/dev/null || true
