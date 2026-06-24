@@ -19,7 +19,7 @@ Both tracks publish the same COBS-wrapped `TelemetryFrame` on ZMQ.
 | Role | Device | Qty | Interface |
 |------|--------|-----|-----------|
 | TX Node | ESP32 (WROOM-32) | 2 | ESP-NOW + GPIO0 button + UART CLI |
-| Gateway | ESP32-S3 (WROOM-1U) | 1 | ESP-NOW + USB/UART @ 921600 |
+| Gateway | ESP32-S3 (WROOM-1U) | 1 | ESP-NOW + **USB serial** to PC (COBS telemetry on `/dev/cu.usbmodem*`) |
 
 Compile-time env (firmware):
 
@@ -89,7 +89,7 @@ GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=2 \
 Notes:
 
 - Replace port names with your actual `/dev/cu.usbserial-*` (do **not** use placeholder `XXXX`).
-- If flash fails at high baud, use `115200` for `espflash`; runtime UART on gateway remains 921600.
+- If flash fails at high baud, use `115200` for `espflash`; on macOS, `run_local.sh` uses `115200` for `/dev/cu.usbmodem*` automatically.
 - UART CLI on TX node: `TRIGGER` / `RELEASE` (115200 default on ESP32 UART0).
 
 ### 2. Run Pipeline (PC)
