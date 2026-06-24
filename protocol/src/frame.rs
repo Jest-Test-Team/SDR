@@ -14,6 +14,7 @@ pub struct TelemetryFrame {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum Payload {
     BoolCmd(bool),
+    ByteCmd(u8),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,5 +85,19 @@ mod tests {
             encoded[0] ^= 0xFF;
         }
         assert!(decode_frame(&encoded).is_err());
+    }
+
+    #[test]
+    fn test_byte_cmd_roundtrip() {
+        let frame = TelemetryFrame {
+            seq: 2,
+            timestamp_ms: 0,
+            node_id: 0x01,
+            payload: Payload::ByteCmd(0xB2),
+        };
+
+        let encoded = encode_frame(&frame).unwrap();
+        let decoded = decode_frame(&encoded).unwrap();
+        assert_eq!(frame, decoded);
     }
 }

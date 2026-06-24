@@ -748,6 +748,7 @@ dependencies = [
  "postcard",
  "prometheus",
  "protocol",
+ "serde",
  "tokio",
  "tokio-serial",
  "tracing",

@@ -1,4 +1,4 @@
-import type { PipelineSnapshot, SimConfig, TelemetryEvent, Kpis, LiveEvent, LiveStatus } from "./types";
+import type { PipelineSnapshot, SimConfig, TelemetryEvent, Kpis, LiveEvent, LiveStatus, FirmwareConfigResponse } from "./types";
 
 const API_BASE = "";
 
@@ -83,4 +83,14 @@ export async function probeControlPlaneHealth(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function applyFirmwareConfig(config: SimConfig): Promise<FirmwareConfigResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/firmware/config`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+  if (!res.ok) throw new Error("firmware config update failed");
+  return res.json();
 }

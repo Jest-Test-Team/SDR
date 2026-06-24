@@ -117,12 +117,14 @@ impl LiveBus {
                     level: "action",
                     source: "control_plane",
                     message: format!(
-                        "ACTION_TRIGGERED: BoolCmd(true) node={} seq={}",
-                        frame.node_id, frame.seq
+                        "ACTION_TRIGGERED: {} node={} seq={}",
+                        payload_label(&frame.payload),
+                        frame.node_id,
+                        frame.seq
                     ),
                     node_id: Some(frame.node_id),
                     seq: Some(frame.seq),
-                    payload: Some("BoolCmd(true)".into()),
+                    payload: Some(payload_label(&frame.payload)),
                 });
             }
             RuleOutcome::Logged => {
@@ -212,6 +214,7 @@ fn payload_label(payload: &Payload) -> String {
     match payload {
         Payload::BoolCmd(true) => "BoolCmd(true)".into(),
         Payload::BoolCmd(false) => "BoolCmd(false)".into(),
+        Payload::ByteCmd(value) => format!("ByteCmd(0x{value:02X})"),
     }
 }
 

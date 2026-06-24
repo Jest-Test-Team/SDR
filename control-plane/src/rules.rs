@@ -8,7 +8,7 @@ pub enum RuleOutcome {
 
 pub fn evaluate(frame: &TelemetryFrame) -> RuleOutcome {
     match frame.payload {
-        Payload::BoolCmd(true) => RuleOutcome::ActionTriggered,
+        Payload::BoolCmd(true) | Payload::ByteCmd(_) => RuleOutcome::ActionTriggered,
         Payload::BoolCmd(false) => RuleOutcome::Logged,
     }
 }
@@ -38,5 +38,16 @@ mod tests {
             payload: Payload::BoolCmd(false),
         };
         assert_eq!(evaluate(&frame), RuleOutcome::Logged);
+    }
+
+    #[test]
+    fn byte_cmd_triggers_action() {
+        let frame = TelemetryFrame {
+            seq: 1,
+            timestamp_ms: 0,
+            node_id: 1,
+            payload: Payload::ByteCmd(0xB2),
+        };
+        assert_eq!(evaluate(&frame), RuleOutcome::ActionTriggered);
     }
 }

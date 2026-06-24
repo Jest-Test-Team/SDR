@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   fetchStatus,
+  applyFirmwareConfig,
   triggerCommand,
   updateConfig,
   wsUrl,
@@ -62,7 +63,9 @@ export function HilDashboard() {
   const [snapshot, setSnapshot] = useState<PipelineSnapshot | null>(null);
   const [connected, setConnected] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [firmwareBusy, setFirmwareBusy] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
+  const [firmwareMessage, setFirmwareMessage] = useState<string | null>(null);
   const t = dictionaries[locale];
 
   const applySnapshot = useCallback((snap: PipelineSnapshot) => {
@@ -129,6 +132,25 @@ export function HilDashboard() {
       setBackendError(t.triggerError);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const onApplyFirmware = async () => {
+    if (!config) return;
+    setFirmwareBusy(true);
+    try {
+      const result = await applyFirmwareConfig(config);
+      const applied = result.applied.length ? result.applied.join(", ") : "-";
+      const unsupported = result.unsupported.length ? result.unsupported.join(", ") : "-";
+      setFirmwareMessage(
+        t.controls.firmwareApplied
+          .replace("{applied}", applied)
+          .replace("{unsupported}", unsupported)
+      );
+    } catch {
+      setFirmwareMessage(t.controls.firmwareApplyError);
+    } finally {
+      setFirmwareBusy(false);
     }
   };
 
@@ -429,6 +451,15 @@ export function HilDashboard() {
         <button className="trigger-btn" onClick={onTrigger} disabled={busy} type="button">
           {busy ? t.controls.sending : t.controls.send}
         </button>
+        <button
+          className="trigger-btn secondary"
+          onClick={onApplyFirmware}
+          disabled={firmwareBusy || !config}
+          type="button"
+        >
+          {firmwareBusy ? t.controls.applyingFirmware : t.controls.applyFirmware}
+        </button>
+        {firmwareMessage && <p className="panel-note">{firmwareMessage}</p>}
       </div>
     </div>
   );

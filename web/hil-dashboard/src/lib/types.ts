@@ -74,3 +74,10 @@ export interface LiveStatus {
   events_buffered: number;
   last_action: { node_id: number; seq: number } | null;
 }
+
+export interface FirmwareConfigResponse {
+  ok: boolean;
+  applied: string[];
+  unsupported: string[];
+  command: string;
+}

@@ -30,8 +30,7 @@ const HEARTBEAT_MS: u64 = 2_000;
 const TX_POWER_DBM: Option<&str> = option_env!("TX_POWER_DBM");
 
 static SEQ: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
-static BOOT_PAYLOAD_BYTE: core::sync::atomic::AtomicU8 =
-    core::sync::atomic::AtomicU8::new(0xB2);
+static BOOT_PAYLOAD_BYTE: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0xB2);
 
 const fn parse_node_id(s: &str) -> u8 {
     let bytes = s.as_bytes();
@@ -70,7 +69,12 @@ fn send_payload(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], payload: Payload) {
     };
 
     match esp_now.send(gateway_mac, &packet) {
-        Ok(()) => log::info!("ESP-NOW sent node={} seq={} payload={:?}", NODE_ID, seq, frame.payload),
+        Ok(()) => log::info!(
+            "ESP-NOW sent node={} seq={} payload={:?}",
+            NODE_ID,
+            seq,
+            frame.payload
+        ),
         Err(e) => log::error!("ESP-NOW send failed: {:?}", e),
     }
 }

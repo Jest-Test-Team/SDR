@@ -197,7 +197,12 @@ fn main() -> ! {
 
     loop {
         drain_to_usb(&mut usb_serial);
-        drain_control_from_usb(&mut usb_serial, &esp_now, &mut control_rx_buf, &mut control_line);
+        drain_control_from_usb(
+            &mut usb_serial,
+            &esp_now,
+            &mut control_rx_buf,
+            &mut control_line,
+        );
         FreeRtos::delay_ms(5);
     }
 }

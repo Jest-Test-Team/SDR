@@ -33,8 +33,8 @@ pub fn process_frame(
     match outcome {
         RuleOutcome::ActionTriggered => {
             info!(
-                "ACTION_TRIGGERED: BoolCmd(true) node={} seq={}",
-                frame.node_id, frame.seq
+                "ACTION_TRIGGERED: {:?} node={} seq={}",
+                frame.payload, frame.node_id, frame.seq
             );
             store.insert(&frame).context("persist telemetry frame")?;
         }

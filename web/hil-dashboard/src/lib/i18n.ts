@@ -83,6 +83,10 @@ export type Dictionary = {
     replayGuard: Explanation;
     sending: string;
     send: string;
+    applyingFirmware: string;
+    applyFirmware: string;
+    firmwareApplied: string;
+    firmwareApplyError: string;
     modeOptions: Record<"EspNow" | "BleAdvertisement" | "Ook433Mhz", string>;
   };
   concepts: Explanation[];
@@ -282,6 +286,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       },
       sending: "Sending...",
       send: "Send boolean command",
+      applyingFirmware: "Applying...",
+      applyFirmware: "Apply to live firmware",
+      firmwareApplied: "Firmware command sent. Applied: {applied}. Simulator-only: {unsupported}.",
+      firmwareApplyError:
+        "Firmware apply failed. Confirm ./scripts/run_local.sh is running and the gateway is connected.",
       modeOptions: {
         EspNow: "ESP-NOW",
         BleAdvertisement: "BLE Advertisement",
@@ -507,6 +516,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
       },
       sending: "發送中...",
       send: "發送布林指令",
+      applyingFirmware: "套用中...",
+      applyFirmware: "套用到 Live 韌體",
+      firmwareApplied: "韌體指令已送出。已套用：{applied}。僅模擬：{unsupported}。",
+      firmwareApplyError: "套用韌體失敗。請確認 ./scripts/run_local.sh 正在執行且 gateway 已連線。",
       modeOptions: {
         EspNow: "ESP-NOW",
         BleAdvertisement: "BLE Advertisement",
