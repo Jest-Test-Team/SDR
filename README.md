@@ -27,7 +27,7 @@ Compile-time env (firmware):
 - `NODE_ID` — TX node id (default `1`)
 - `TX_POWER_DBM` — optional ESP32 Wi-Fi TX power for the TX node, clamped by firmware to the supported hardware range
 
-See `firmware/HARDWARE_CAPABILITIES.md` for which dashboard controls are real firmware controls versus simulator/SDR-path controls.
+See `firmware/HARDWARE_CAPABILITIES.md` for which dashboard controls are real firmware controls versus simulator/SDR-path controls, including the runtime FE/BE firmware-control path.
 
 ## HIL 模擬器儀表板（ESP32 軟體模擬）
 

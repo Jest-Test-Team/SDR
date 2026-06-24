@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use esp_idf_svc::espnow::{EspNow, PeerInfo, ReceiveInfo};
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
-use esp_idf_svc::hal::io::{Read, Write};
+use esp_idf_svc::hal::io::Write;
 use esp_idf_svc::hal::usb_serial::{UsbSerialConfig, UsbSerialDriver};
 use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
@@ -88,7 +88,7 @@ fn drain_control_from_usb(
     rx_buf: &mut [u8; 128],
     line: &mut heapless::Vec<u8, 128>,
 ) {
-    match serial.read(rx_buf) {
+    match serial.read(rx_buf, 0) {
         Ok(0) => {}
         Ok(n) => {
             for &byte in &rx_buf[..n] {
