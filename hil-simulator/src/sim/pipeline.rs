@@ -8,17 +8,12 @@ const SAMPLES_PER_BIT: usize = 36;
 const CARRIER_PERIOD: usize = 6;
 const CHART_POINTS: usize = 360;
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum TransmissionMode {
+    #[default]
     EspNow,
     BleAdvertisement,
     Ook433Mhz,
-}
-
-impl Default for TransmissionMode {
-    fn default() -> Self {
-        Self::EspNow
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
