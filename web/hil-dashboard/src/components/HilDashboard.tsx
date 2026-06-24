@@ -9,7 +9,7 @@ import {
   wsUrl,
 } from "@/lib/api";
 import { dictionaries, type Dictionary, type Locale } from "@/lib/i18n";
-import type { Kpis, PipelineSnapshot, SimConfig, TelemetryEvent } from "@/lib/types";
+import type { Kpis, PipelineSnapshot, SidecarTransport, SimConfig, TelemetryEvent } from "@/lib/types";
 import { BitCompare } from "./BitCompare";
 import { LiveHardwarePanel } from "./LiveHardwarePanel";
 import { PipelineFlow } from "./PipelineFlow";
@@ -61,6 +61,7 @@ export function HilDashboard() {
   const [kpis, setKpis] = useState<Kpis | null>(null);
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
   const [snapshot, setSnapshot] = useState<PipelineSnapshot | null>(null);
+  const [sidecarTransport, setSidecarTransport] = useState<SidecarTransport>("zmq");
   const [connected, setConnected] = useState(false);
   const [busy, setBusy] = useState(false);
   const [firmwareBusy, setFirmwareBusy] = useState(false);
@@ -80,6 +81,7 @@ export function HilDashboard() {
       .then((s) => {
         setConfig(s.config);
         setKpis(s.kpis);
+        setSidecarTransport(s.sidecar_transport ?? "zmq");
         setBackendError(null);
       })
       .catch(() => {
@@ -342,6 +344,18 @@ export function HilDashboard() {
       <div className="control-panel panel">
         <h3>{t.sections.controls}</h3>
         <p className="panel-note">{t.controls.intro}</p>
+        <div className="sidecar-status" aria-live="polite">
+          <span>{t.controls.sidecar.title}</span>
+          <strong>{t.controls.sidecar.options[sidecarTransport]}</strong>
+          <small>{t.controls.sidecar.body}</small>
+          {snapshot && (
+            <small>
+              {snapshot.zmq_published
+                ? t.controls.sidecar.lastPublished
+                : t.controls.sidecar.lastLocalOnly}
+            </small>
+          )}
+        </div>
         <div className="controls">
           <label>
             <span>{t.controls.mode.title}</span>

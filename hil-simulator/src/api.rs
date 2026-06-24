@@ -17,6 +17,7 @@ use crate::state::SharedState;
 #[derive(Serialize)]
 struct StatusResponse {
     hardware_mode: &'static str,
+    sidecar_transport: &'static str,
     kpis: Kpis,
     config: SimConfig,
 }
@@ -39,6 +40,7 @@ pub fn router(state: SharedState) -> Router {
 async fn get_status(State(state): State<SharedState>) -> Json<StatusResponse> {
     Json(StatusResponse {
         hardware_mode: "esp32_simulation",
+        sidecar_transport: state.sidecar_transport(),
         kpis: state.kpis.read().await.clone(),
         config: state.config.read().await.clone(),
     })
@@ -86,6 +88,7 @@ async fn handle_socket(socket: WebSocket, state: SharedState) {
     let init = serde_json::json!({
         "type": "hello",
         "hardware_mode": "esp32_simulation",
+        "sidecar_transport": state.sidecar_transport(),
         "config": state.config.read().await.clone(),
         "kpis": state.kpis.read().await.clone(),
         "events": state.events.read().await.clone(),

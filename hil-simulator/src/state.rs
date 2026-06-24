@@ -42,6 +42,14 @@ impl AppState {
         })
     }
 
+    pub fn sidecar_transport(&self) -> &'static str {
+        if self.secure_ingest.is_some() {
+            "tls13_mtls"
+        } else {
+            "zmq"
+        }
+    }
+
     pub async fn trigger(self: &Arc<Self>, value: bool) -> PipelineSnapshot {
         let config = self.config.read().await.clone();
         let seq = self.seq.fetch_add(1, Ordering::Relaxed) + 1;

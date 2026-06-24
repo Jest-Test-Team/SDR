@@ -21,6 +21,8 @@ export interface Kpis {
   packets_ok: number;
 }
 
+export type SidecarTransport = "zmq" | "tls13_mtls";
+
 export interface TelemetryEvent {
   time: string;
   node_id: number;

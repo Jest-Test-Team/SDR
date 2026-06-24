@@ -1,9 +1,10 @@
-import type { PipelineSnapshot, SimConfig, TelemetryEvent, Kpis, LiveEvent, LiveStatus, FirmwareConfigResponse } from "./types";
+import type { PipelineSnapshot, SimConfig, TelemetryEvent, Kpis, LiveEvent, LiveStatus, FirmwareConfigResponse, SidecarTransport } from "./types";
 
 const API_BASE = "";
 
 export async function fetchStatus(): Promise<{
   hardware_mode: string;
+  sidecar_transport?: SidecarTransport;
   kpis: Kpis;
   config: SimConfig;
 }> {
