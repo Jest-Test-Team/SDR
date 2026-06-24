@@ -1,3 +1,4 @@
+pub mod live;
 pub mod metrics;
 pub mod rules;
 pub mod store;

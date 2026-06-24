@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use control_plane::{store::TelemetryStore, subscriber};
+use control_plane::{live::LiveBus, store::TelemetryStore, subscriber};
 use protocol::ReplayGuard;
 use std::sync::{Arc, Mutex};
 use tracing::info;
@@ -29,18 +29,21 @@ async fn main() -> Result<()> {
 
     let store = Arc::new(TelemetryStore::open(&args.db_path)?);
     let replay = Arc::new(Mutex::new(ReplayGuard::new()));
+    let live_bus = LiveBus::new(200);
 
-    let health_app = control_plane::metrics::router();
+    let app = control_plane::metrics::router()
+        .merge(control_plane::live::router(live_bus.clone()));
     let health_addr = format!("0.0.0.0:{}", args.health_port);
     let health_listener = tokio::net::TcpListener::bind(&health_addr).await?;
     let health_server = tokio::spawn(async move {
-        axum::serve(health_listener, health_app).await.unwrap();
+        axum::serve(health_listener, app).await.unwrap();
     });
 
     let subscriber = tokio::spawn(subscriber::run_subscriber(
         args.zmq_endpoint,
         replay,
         store,
+        live_bus,
     ));
 
     tokio::select! {

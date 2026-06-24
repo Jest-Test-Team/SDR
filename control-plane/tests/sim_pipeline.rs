@@ -66,6 +66,7 @@ fn sim_pipeline_zmq_roundtrip() {
             endpoint.to_string(),
             replay_clone,
             store_clone,
+            None,
             Some(3),
         )
         .expect("subscriber");
@@ -90,6 +91,6 @@ fn process_frame_unit() {
     let store = TelemetryStore::open(tmp.path().join("telemetry.db")).unwrap();
     let mut replay = ReplayGuard::new();
     let frame = sample_frame(9, true);
-    process_frame(frame, &mut replay, &store).unwrap();
+    process_frame(frame, &mut replay, &store, None).unwrap();
     assert!(store.contains_action(1, 9));
 }

@@ -3,6 +3,7 @@ use protocol::{decode_frame, ReplayGuard};
 use std::sync::{Arc, Mutex};
 use tracing::{info, warn};
 
+use crate::live::LiveBus;
 use crate::rules::RuleOutcome;
 use crate::store::TelemetryStore;
 
@@ -10,6 +11,7 @@ pub fn process_frame(
     frame: protocol::frame::TelemetryFrame,
     replay: &mut ReplayGuard,
     store: &TelemetryStore,
+    live: Option<&LiveBus>,
 ) -> Result<()> {
     if !replay.accept(frame.node_id, frame.seq) {
         warn!(
@@ -17,10 +19,18 @@ pub fn process_frame(
             seq = frame.seq,
             "rejected replayed frame"
         );
+        if let Some(bus) = live {
+            bus.record_frame(&frame, RuleOutcome::Logged, true);
+        }
         return Ok(());
     }
 
-    match crate::rules::evaluate(&frame) {
+    let outcome = crate::rules::evaluate(&frame);
+    if let Some(bus) = live {
+        bus.record_frame(&frame, outcome, false);
+    }
+
+    match outcome {
         RuleOutcome::ActionTriggered => {
             info!(
                 "ACTION_TRIGGERED: BoolCmd(true) node={} seq={}",
@@ -42,6 +52,7 @@ pub fn run_subscriber_blocking(
     endpoint: String,
     replay: Arc<Mutex<ReplayGuard>>,
     store: Arc<TelemetryStore>,
+    live: Option<LiveBus>,
     max_frames: Option<usize>,
 ) -> Result<()> {
     let ctx = zmq::Context::new();
@@ -59,7 +70,7 @@ pub fn run_subscriber_blocking(
             Ok(frame) => {
                 crate::metrics::FRAMES_DECODED.inc();
                 let mut guard = replay.lock().expect("replay mutex poisoned");
-                process_frame(frame, &mut guard, &store)?;
+                process_frame(frame, &mut guard, &store, live.as_ref())?;
             }
             Err(e) => warn!("frame decode error: {}", e),
         }
@@ -75,10 +86,11 @@ pub async fn run_subscriber(
     endpoint: String,
     replay: Arc<Mutex<ReplayGuard>>,
     store: Arc<TelemetryStore>,
+    live: LiveBus,
 ) -> Result<()> {
     let endpoint = endpoint.clone();
     tokio::task::spawn_blocking(move || {
-        run_subscriber_blocking(endpoint, replay, store, None)
+        run_subscriber_blocking(endpoint, replay, store, Some(live), None)
     })
     .await?
 }
