@@ -13,7 +13,6 @@ use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
 use heapless::Deque;
 use protocol::{decode_espnow, encode_frame, ESP_NOW_VENDOR_ID};
-use protocol::frame::{Payload, TelemetryFrame};
 
 const MAX_PENDING: usize = 8;
 const MAX_FRAME: usize = 256;
@@ -145,25 +144,8 @@ fn main() -> ! {
 
     log::info!("Gateway ready (USB serial bridge to PC)");
 
-    let mut last_usb_probe_ms = 0u64;
-
     loop {
         drain_to_usb(&mut usb_serial);
-
-        let now_ms = unsafe { (esp_idf_svc::sys::esp_timer_get_time() / 1_000) as u64 };
-        if now_ms.saturating_sub(last_usb_probe_ms) >= 2_000 {
-            last_usb_probe_ms = now_ms;
-            let probe = TelemetryFrame {
-                seq: 0,
-                timestamp_ms: now_ms,
-                node_id: 0,
-                payload: Payload::BoolCmd(false),
-            };
-            if let Ok(wire) = encode_frame(&probe) {
-                enqueue_uart_frame(&wire);
-            }
-        }
-
         FreeRtos::delay_ms(5);
     }
 }

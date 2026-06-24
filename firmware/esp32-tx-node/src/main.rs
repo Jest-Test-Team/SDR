@@ -3,19 +3,14 @@
 mod espnow_setup;
 mod mac;
 
-use core::sync::atomic::{AtomicBool, Ordering};
-
 use esp_idf_svc::espnow::EspNow;
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
 use esp_idf_svc::hal::gpio::{PinDriver, Pull};
-use esp_idf_svc::hal::io::Read;
-use esp_idf_svc::hal::uart::UartDriver;
 use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::sys;
 use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
-use heapless::String;
 use protocol::frame::{Payload, TelemetryFrame};
 use protocol::encode_espnow;
 
@@ -31,8 +26,6 @@ const DEBOUNCE_MS: u32 = 50;
 const HEARTBEAT_MS: u64 = 2_000;
 
 static SEQ: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
-static UART_TRIGGER: AtomicBool = AtomicBool::new(false);
-static UART_RELEASE: AtomicBool = AtomicBool::new(false);
 
 const fn parse_node_id(s: &str) -> u8 {
     let bytes = s.as_bytes();
@@ -57,7 +50,7 @@ fn now_ms() -> u64 {
 }
 
 fn send_bool(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], value: bool) {
-    let seq = SEQ.fetch_add(1, Ordering::Relaxed) + 1;
+    let seq = SEQ.fetch_add(1, core::sync::atomic::Ordering::Relaxed) + 1;
     let frame = TelemetryFrame {
         seq,
         timestamp_ms: now_ms(),
@@ -73,23 +66,6 @@ fn send_bool(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], value: bool) {
     match esp_now.send(gateway_mac, &packet) {
         Ok(()) => log::info!("ESP-NOW sent node={} seq={} value={}", NODE_ID, seq, value),
         Err(e) => log::error!("ESP-NOW send failed: {:?}", e),
-    }
-}
-
-fn poll_uart(uart: &mut UartDriver<'_>, line: &mut String<64>) {
-    let mut byte = [0u8; 1];
-    while uart.read(&mut byte).unwrap_or(0) > 0 {
-        let ch = byte[0];
-        if ch == b'\n' || ch == b'\r' {
-            if line.as_str().trim() == "TRIGGER" {
-                UART_TRIGGER.store(true, Ordering::Relaxed);
-            } else if line.as_str().trim() == "RELEASE" {
-                UART_RELEASE.store(true, Ordering::Relaxed);
-            }
-            line.clear();
-        } else if line.push(ch as char).is_err() {
-            line.clear();
-        }
     }
 }
 
@@ -130,34 +106,16 @@ fn main() -> ! {
         Err(e) => log::error!("add_peer failed: {:?}", e),
     }
 
+    // BOOT button on GPIO0. Do not open UartDriver on UART0 — that port is the console.
     let button = PinDriver::input(peripherals.pins.gpio0, Pull::Up).unwrap();
-    let mut uart = UartDriver::new(
-        peripherals.uart0,
-        peripherals.pins.gpio1,
-        peripherals.pins.gpio3,
-        Option::<esp_idf_svc::hal::gpio::AnyIOPin>::None,
-        Option::<esp_idf_svc::hal::gpio::AnyIOPin>::None,
-        &esp_idf_svc::hal::uart::config::Config::default(),
-    )
-    .unwrap();
+    log::info!("main loop started (BOOT=GPIO0 trigger)");
 
-    let mut line = String::<64>::new();
     let mut last_button_ms = 0u64;
     let mut button_down = false;
     let mut trigger_sent = false;
     let mut last_heartbeat_ms = now_ms();
 
     loop {
-        poll_uart(&mut uart, &mut line);
-
-        if UART_TRIGGER.swap(false, Ordering::Relaxed) {
-            log::info!("UART TRIGGER received");
-            send_bool(&esp_now, gateway_mac, true);
-        }
-        if UART_RELEASE.swap(false, Ordering::Relaxed) {
-            send_bool(&esp_now, gateway_mac, false);
-        }
-
         let pressed = button.is_low();
         if pressed {
             if !button_down {
