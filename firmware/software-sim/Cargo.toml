@@ -9,3 +9,5 @@ description = "Software-sim helpers for firmware-facing frame and control encodi
 [dependencies]
 anyhow = { workspace = true }
 protocol = { path = "../../protocol" }
+serde = { workspace = true, features = ["derive", "std"] }
+serde_json = "1.0"

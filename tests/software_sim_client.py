@@ -71,6 +71,8 @@ def main():
     wait = sub.add_parser("wait-url")
     wait.add_argument("url")
     wait.add_argument("--timeout", type=float, default=15)
+    getj = sub.add_parser("get-json")
+    getj.add_argument("url")
     put = sub.add_parser("put-json")
     put.add_argument("url")
     put.add_argument("json_body")
@@ -89,6 +91,8 @@ def main():
 
     if args.cmd == "wait-url":
         wait_url(args.url, args.timeout)
+    elif args.cmd == "get-json":
+        print(json.dumps(request_json("GET", args.url)))
     elif args.cmd == "put-json":
         print(json.dumps(request_json("PUT", args.url, json.loads(args.json_body))))
     elif args.cmd == "post-json":

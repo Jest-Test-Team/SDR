@@ -1,3 +1,5 @@
+pub mod gateway;
+
 use protocol::encode_frame;
 use protocol::frame::{Payload, TelemetryFrame};
 

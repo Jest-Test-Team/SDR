@@ -77,6 +77,56 @@ export interface LiveStatus {
   last_action: { node_id: number; seq: number } | null;
 }
 
+export type WifiMode = "ap_sta" | "sta";
+
+export interface NodeInfo {
+  mac: string;
+  ip: string;
+  free_heap_bytes: number;
+  online: boolean;
+}
+
+export interface OidEntry {
+  oid: string;
+  value: string;
+}
+
+export interface GatewaySnapshot {
+  wifi_mode: WifiMode;
+  downstream_online: boolean;
+  free_heap_bytes: number;
+  heap_total_bytes: number;
+  command_count: number;
+  oids: OidEntry[];
+  nodes: NodeInfo[];
+  command_log: string[];
+}
+
+export interface SnmpResponse {
+  protocol: string;
+  operation: string;
+  oid: string;
+  value: string | null;
+  ok: boolean;
+  message: string;
+}
+
+export interface GatewayResponse {
+  ok: boolean;
+  command: string;
+  message: string;
+  snmp?: SnmpResponse;
+  snapshot: GatewaySnapshot;
+}
+
+export type GatewayCommand =
+  | { command: "net_toggle_downstream" }
+  | { command: "snmp_set"; oid: string; value: string }
+  | { command: "snmp_get"; oid: string }
+  | { command: "deauth_sta"; mac: string }
+  | { command: "sys_health" }
+  | { command: "register_node"; mac: string; ip: string };
+
 export interface FirmwareConfigResponse {
   ok: boolean;
   applied: string[];

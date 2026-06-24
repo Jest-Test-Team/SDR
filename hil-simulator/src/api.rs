@@ -11,7 +11,7 @@ use axum::{
 use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 
-use crate::sim::{Kpis, SimConfig, TransmissionMode};
+use crate::sim::{GatewayCommand, GatewaySnapshot, Kpis, SimConfig, TransmissionMode};
 use crate::state::SharedState;
 
 #[derive(Serialize)]
@@ -33,6 +33,8 @@ pub fn router(state: SharedState) -> Router {
         .route("/api/v1/config", get(get_config).put(update_config))
         .route("/api/v1/trigger", post(trigger))
         .route("/api/v1/events", get(get_events))
+        .route("/api/v1/gateway", get(get_gateway))
+        .route("/api/v1/gateway/command", post(gateway_command))
         .route("/ws/live", get(ws_handler))
         .with_state(state)
 }
@@ -75,6 +77,18 @@ async fn trigger(
 
 async fn get_events(State(state): State<SharedState>) -> Json<Vec<crate::sim::TelemetryEvent>> {
     Json(state.events.read().await.clone())
+}
+
+async fn get_gateway(State(state): State<SharedState>) -> Json<GatewaySnapshot> {
+    Json(state.gateway_snapshot().await)
+}
+
+async fn gateway_command(
+    State(state): State<SharedState>,
+    Json(command): Json<GatewayCommand>,
+) -> Json<serde_json::Value> {
+    let response = state.apply_gateway_command(&command).await;
+    Json(serde_json::json!({ "ok": response.ok, "response": response }))
 }
 
 async fn ws_handler(ws: WebSocketUpgrade, State(state): State<SharedState>) -> impl IntoResponse {

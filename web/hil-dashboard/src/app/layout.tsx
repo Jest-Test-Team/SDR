@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { NavBar } from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: "ESP32-S3 HIL 模擬器",
-  description: "ESP32-S3 to SDR Hardware-in-the-Loop simulator",
+  title: "Secure Telemetry Gateway",
+  description: "ESP32-S3 secure telemetry gateway & SDR Hardware-in-the-Loop simulator",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-Hant">
-      <body>{children}</body>
+      <body>
+        <NavBar />
+        {children}
+      </body>
     </html>
   );
 }

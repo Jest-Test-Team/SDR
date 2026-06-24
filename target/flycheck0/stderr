@@ -1,0 +1,401 @@
+   0.319051459s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/Check { test: false }/TargetInner { name: "esp32-tx-node", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/src/main.rs", Edition2024) }
+   0.319076709s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-8af1a08aa520b808/bin-esp32-tx-node`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.323247459s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="esp_idf_svc"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-svc v0.52.1/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_svc", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-svc-0.52.1/src/lib.rs", Edition2021) }
+   0.323259459s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="esp_idf_svc"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-svc-e9091368a2e5e34a/lib-esp_idf_svc`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   8: cargo::ops::cargo_compile::compile_ws
+   9: cargo::ops::cargo_compile::compile_with_exec
+  10: cargo::ops::cargo_compile::compile
+  11: cargo::commands::check::exec
+  12: <cargo::cli::Exec>::exec
+  13: cargo::main
+  14: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  15: std::rt::lang_start::<()>::{closure#0}
+  16: std::rt::lang_start_internal
+  17: _main
+   0.325012709s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="esp_idf_hal"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-hal v0.46.2/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_hal", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-hal-0.46.2/src/lib.rs", Edition2021) }
+   0.325020959s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="esp_idf_hal"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-hal-c0a9be446eb4c9fe/lib-esp_idf_hal`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   9: cargo::ops::cargo_compile::compile_ws
+  10: cargo::ops::cargo_compile::compile_with_exec
+  11: cargo::ops::cargo_compile::compile
+  12: cargo::commands::check::exec
+  13: <cargo::cli::Exec>::exec
+  14: cargo::main
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  16: std::rt::lang_start::<()>::{closure#0}
+  17: std::rt::lang_start_internal
+  18: _main
+   0.327020417s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-hal v0.46.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-hal-0.46.2/build.rs", Edition2021) }
+   0.327032792s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-hal-97ecd0cebf160744/run-build-script-build-script-build`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::custom_build::build_work
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: cargo::core::compiler::compile
+   9: cargo::core::compiler::compile
+  10: <cargo::core::compiler::build_runner::BuildRunner>::compile
+  11: cargo::ops::cargo_compile::compile_ws
+  12: cargo::ops::cargo_compile::compile_with_exec
+  13: cargo::ops::cargo_compile::compile
+  14: cargo::commands::check::exec
+  15: <cargo::cli::Exec>::exec
+  16: cargo::main
+  17: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  18: std::rt::lang_start::<()>::{closure#0}
+  19: std::rt::lang_start_internal
+  20: _main
+   0.332997125s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-sys v0.37.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-sys-0.37.2/build/build.rs", Edition2021) }
+   0.333006125s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-sys-14ae79d739750284/run-build-script-build-script-build`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::custom_build::build_work
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: cargo::core::compiler::compile
+   9: cargo::core::compiler::compile
+  10: cargo::core::compiler::compile
+  11: <cargo::core::compiler::build_runner::BuildRunner>::compile
+  12: cargo::ops::cargo_compile::compile_ws
+  13: cargo::ops::cargo_compile::compile_with_exec
+  14: cargo::ops::cargo_compile::compile
+  15: cargo::commands::check::exec
+  16: <cargo::cli::Exec>::exec
+  17: cargo::main
+  18: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  19: std::rt::lang_start::<()>::{closure#0}
+  20: std::rt::lang_start_internal
+  21: _main
+   0.333836209s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="esp_idf_sys"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-sys v0.37.2/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_sys", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-sys-0.37.2/src/lib.rs", Edition2021) }
+   0.333844917s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="esp_idf_sys"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-sys-b4614520c39469a6/lib-esp_idf_sys`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: cargo::core::compiler::compile
+   9: <cargo::core::compiler::build_runner::BuildRunner>::compile
+  10: cargo::ops::cargo_compile::compile_ws
+  11: cargo::ops::cargo_compile::compile_with_exec
+  12: cargo::ops::cargo_compile::compile
+  13: cargo::commands::check::exec
+  14: <cargo::cli::Exec>::exec
+  15: cargo::main
+  16: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  17: std::rt::lang_start::<()>::{closure#0}
+  18: std::rt::lang_start_internal
+  19: _main
+   0.335166667s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-svc v0.52.1/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-svc-0.52.1/build.rs", Edition2021) }
+   0.335173167s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-svc-8108a41cb2b9d993/run-build-script-build-script-build`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::custom_build::build_work
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: cargo::core::compiler::compile
+   9: <cargo::core::compiler::build_runner::BuildRunner>::compile
+  10: cargo::ops::cargo_compile::compile_ws
+  11: cargo::ops::cargo_compile::compile_with_exec
+  12: cargo::ops::cargo_compile::compile
+  13: cargo::commands::check::exec
+  14: <cargo::cli::Exec>::exec
+  15: cargo::main
+  16: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  17: std::rt::lang_start::<()>::{closure#0}
+  18: std::rt::lang_start_internal
+  19: _main
+   0.335983709s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/build.rs", Edition2024) }
+   0.335990709s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-9d910fd9dc27f6c2/run-build-script-build-script-build`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::custom_build::build_work
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   9: cargo::ops::cargo_compile::compile_ws
+  10: cargo::ops::cargo_compile::compile_with_exec
+  11: cargo::ops::cargo_compile::compile
+  12: cargo::commands::check::exec
+  13: <cargo::cli::Exec>::exec
+  14: cargo::main
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  16: std::rt::lang_start::<()>::{closure#0}
+  17: std::rt::lang_start_internal
+  18: _main
+   0.336294917s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/Check { test: true }/TargetInner { name: "esp32-tx-node", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/src/main.rs", Edition2024) }
+   0.336302250s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-67ab983242e940b5/test-bin-esp32-tx-node`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.346677167s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/Check { test: false }/TargetInner { name: "esp32s3-gateway", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/src/main.rs", Edition2024) }
+   0.346703042s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-2908423de8ad4cda/bin-esp32s3-gateway`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.347498709s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/build.rs", Edition2024) }
+   0.347509584s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-8951b5c80168a3b4/run-build-script-build-script-build`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::custom_build::build_work
+   6: cargo::core::compiler::compile
+   7: cargo::core::compiler::compile
+   8: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   9: cargo::ops::cargo_compile::compile_ws
+  10: cargo::ops::cargo_compile::compile_with_exec
+  11: cargo::ops::cargo_compile::compile
+  12: cargo::commands::check::exec
+  13: <cargo::cli::Exec>::exec
+  14: cargo::main
+  15: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  16: std::rt::lang_start::<()>::{closure#0}
+  17: std::rt::lang_start_internal
+  18: _main
+   0.347825917s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/Check { test: true }/TargetInner { name: "esp32s3-gateway", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/src/main.rs", Edition2024) }
+   0.347832959s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-fc54c1f7af5eceaa/test-bin-esp32s3-gateway`
+
+Caused by:
+    No such file or directory (os error 2)
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: cargo_util::paths::read_bytes
+   2: cargo_util::paths::read
+   3: cargo::core::compiler::fingerprint::_compare_old_fingerprint
+   4: cargo::core::compiler::fingerprint::prepare_target
+   5: cargo::core::compiler::compile
+   6: <cargo::core::compiler::build_runner::BuildRunner>::compile
+   7: cargo::ops::cargo_compile::compile_ws
+   8: cargo::ops::cargo_compile::compile_with_exec
+   9: cargo::ops::cargo_compile::compile
+  10: cargo::commands::check::exec
+  11: <cargo::cli::Exec>::exec
+  12: cargo::main
+  13: std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()>
+  14: std::rt::lang_start::<()>::{closure#0}
+  15: std::rt::lang_start_internal
+  16: _main
+   0.351921834s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: stale: changed "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/api.rs"
+   0.351926625s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:           (vs) "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/hil-simulator-9a1f3f8fb64711ca/dep-lib-hil_simulator"
+   0.351929500s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1782310034, nanos: 117915915 } < FileTime { seconds: 1782310050, nanos: 966274308 }
+   0.352059375s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: false }/TargetInner { ..: lib_target("hil_simulator", ["lib"], "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/lib.rs", Edition2024) }
+   0.352068000s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/hil-simulator-9a1f3f8fb64711ca/dep-lib-hil_simulator", reference_mtime: FileTime { seconds: 1782310034, nanos: 117915915 }, stale: "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/api.rs", stale_mtime: FileTime { seconds: 1782310050, nanos: 966274308 } }))
+   0.356366375s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: stale: changed "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/api.rs"
+   0.356373084s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:           (vs) "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/hil-simulator-4bfd13e6a191b993/dep-test-lib-hil_simulator"
+   0.356375959s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1782310034, nanos: 118033039 } < FileTime { seconds: 1782310050, nanos: 966274308 }
+   0.356473750s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: true }/TargetInner { ..: lib_target("hil_simulator", ["lib"], "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/lib.rs", Edition2024) }
+   0.356481292s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/hil-simulator-4bfd13e6a191b993/dep-test-lib-hil_simulator", reference_mtime: FileTime { seconds: 1782310034, nanos: 118033039 }, stale: "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/api.rs", stale_mtime: FileTime { seconds: 1782310050, nanos: 966274308 } }))
+   0.357616334s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: false }/TargetInner { name: "hil-simulator", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/main.rs", Edition2024) }
+   0.357629167s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { unit: UnitIndex(205) })
+   0.358642334s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: true }/TargetInner { name: "hil-simulator", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/main.rs", Edition2024) }
+   0.358649250s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { unit: UnitIndex(205) })
+   Compiling esp-idf-sys v0.37.2
+    Checking hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)
+warning: esp-idf-sys@0.37.2: could not identify the root crate and `ESP_IDF_SYS_ROOT_CRATE` not specified
+error: failed to run custom build command for `esp-idf-sys v0.37.2`
+note: To improve backtraces for build dependencies, set the CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG=true environment variable to enable debug information generation.
+
+Caused by:
+  process didn't exit successfully: `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/build/esp-idf-sys-1cb0335c5824d342/build-script-build` (exit status: 1)
+  --- stdout
+  cargo:rerun-if-env-changed=ESP_IDF_TOOLS_INSTALL_DIR
+  cargo:rerun-if-env-changed=ESP_IDF_SDKCONFIG
+  cargo:rerun-if-env-changed=ESP_IDF_SDKCONFIG_DEFAULTS
+  cargo:rerun-if-env-changed=MCU
+  cargo:rerun-if-env-changed=ESP_IDF_SYS_ROOT_CRATE
+  cargo:rerun-if-env-changed=ESP_IDF_VERSION
+  cargo:rerun-if-env-changed=ESP_IDF_REPOSITORY
+  cargo:rerun-if-env-changed=ESP_IDF_CMAKE_GENERATOR
+  cargo:rerun-if-env-changed=IDF_PATH
+  cargo:rerun-if-env-changed=EXTRA-COMPONENTS
+  cargo:rerun-if-env-changed=ESP_IDF_COMPONENTS
+  cargo:rerun-if-env-changed=ESP_IDF_COMPONENT_MANAGER
+  cargo:warning=could not identify the root crate and `ESP_IDF_SYS_ROOT_CRATE` not specified
+
+  --- stderr
+  Build configuration: BuildConfig {
+      esp_idf_tools_install_dir: None,
+      esp_idf_sdkconfig: None,
+      esp_idf_sdkconfig_defaults: None,
+      mcu: None,
+      native: NativeConfig {
+          esp_idf_version: None,
+          esp_idf_repository: None,
+          esp_idf_cmake_generator: None,
+          idf_path: None,
+          extra_components: [],
+          esp_idf_components: None,
+          esp_idf_component_manager: None,
+      },
+      esp_idf_sys_root_crate: None,
+  }
+  Error: Unsupported target 'aarch64-apple-darwin'
+
+  Stack backtrace:
+     0: std::backtrace_rs::backtrace::libunwind::trace
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/../../backtrace/src/backtrace/libunwind.rs:117:9
+     1: std::backtrace_rs::backtrace::trace_unsynchronized::<<std::backtrace::Backtrace>::create::{closure#0}>
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/../../backtrace/src/backtrace/mod.rs:66:14
+     2: <std::backtrace::Backtrace>::create
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/backtrace.rs:331:13
+     3: anyhow::error::<impl anyhow::Error>::msg
+     4: build_script_build::native::cargo_driver::chip::Chip::detect
+     5: build_script_build::native::cargo_driver::build
+     6: build_script_build::native::build
+     7: build_script_build::main
+     8: core::ops::function::FnOnce::call_once
+     9: std::sys::backtrace::__rust_begin_short_backtrace
+    10: std::rt::lang_start::{{closure}}
+    11: <&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync as core::ops::function::FnOnce<()>>::call_once
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/core/src/ops/function.rs:287:21
+    12: std::panicking::catch_unwind::do_call::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32>
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:581:40
+    13: std::panicking::catch_unwind::<i32, &dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync>
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:544:19
+    14: std::panic::catch_unwind::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32>
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panic.rs:359:14
+    15: std::rt::lang_start_internal::{closure#0}
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/rt.rs:175:24
+    16: std::panicking::catch_unwind::do_call::<std::rt::lang_start_internal::{closure#0}, isize>
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:581:40
+    17: std::panicking::catch_unwind::<isize, std::rt::lang_start_internal::{closure#0}>
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panicking.rs:544:19
+    18: std::panic::catch_unwind::<std::rt::lang_start_internal::{closure#0}, isize>
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/panic.rs:359:14
+    19: std::rt::lang_start_internal
+               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/rt.rs:171:5
+    20: std::rt::lang_start
+    21: _main

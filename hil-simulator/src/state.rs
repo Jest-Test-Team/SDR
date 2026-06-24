@@ -4,7 +4,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use protocol::ReplayGuard;
 use tokio::sync::{RwLock, broadcast};
 
-use crate::sim::{Kpis, PipelineSnapshot, SimConfig, TelemetryEvent};
+use crate::sim::{
+    GatewayCommand, GatewayResponse, GatewaySim, Kpis, PipelineSnapshot, SimConfig, TelemetryEvent,
+};
 
 #[derive(Clone, Debug)]
 pub struct SecureIngestConfig {
@@ -23,6 +25,7 @@ pub struct AppState {
     pub tx: broadcast::Sender<PipelineSnapshot>,
     pub zmq_endpoint: String,
     pub secure_ingest: Option<SecureIngestConfig>,
+    pub gateway: RwLock<GatewaySim>,
 }
 
 pub type SharedState = Arc<AppState>;
@@ -39,7 +42,16 @@ impl AppState {
             tx,
             zmq_endpoint,
             secure_ingest,
+            gateway: RwLock::new(GatewaySim::new()),
         })
+    }
+
+    pub async fn gateway_snapshot(&self) -> crate::sim::GatewaySnapshot {
+        self.gateway.read().await.snapshot()
+    }
+
+    pub async fn apply_gateway_command(&self, command: &GatewayCommand) -> GatewayResponse {
+        self.gateway.write().await.apply(command)
     }
 
     pub fn sidecar_transport(&self) -> &'static str {
