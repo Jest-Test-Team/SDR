@@ -415,3 +415,96 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.live-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.live-header h3 {
+  margin: 0 0 0.25rem;
+}
+
+.live-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-pill {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.live-pill.ok {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.live-stream-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.live-instructions ol {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.live-log-panel .live-log {
+  max-height: 420px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  background: #0a0c10;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.live-log-line {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+  border-bottom: 1px solid #1a1e26;
+}
+
+.live-log-time {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.live-log-level {
+  flex-shrink: 0;
+  width: 3.5rem;
+  font-weight: 600;
+}
+
+.live-log-msg {
+  word-break: break-word;
+}
+
+.log-info .live-log-level {
+  color: var(--accent);
+}
+
+.log-warn .live-log-level {
+  color: var(--orange);
+}
+
+.log-action .live-log-level {
+  color: var(--green);
+}
+
+.log-action .live-log-msg {
+  color: var(--green);
+}

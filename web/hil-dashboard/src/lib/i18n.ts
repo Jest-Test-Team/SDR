@@ -19,6 +19,7 @@ export type Dictionary = {
     hil: string;
     ook: string;
     bits: string;
+    live: string;
   };
   sections: {
     flow: string;
@@ -85,6 +86,26 @@ export type Dictionary = {
     modeOptions: Record<"EspNow" | "BleAdvertisement" | "Ook433Mhz", string>;
   };
   concepts: Explanation[];
+  live: {
+    title: string;
+    intro: string;
+    edge: string;
+    controlPlane: string;
+    up: string;
+    down: string;
+    streamConnected: string;
+    streamConnecting: string;
+    backendError: string;
+    framesDecoded: string;
+    eventsBuffered: string;
+    lastAction: string;
+    noActionYet: string;
+    instructionsTitle: string;
+    instructions: string[];
+    logTitle: string;
+    logIntro: string;
+    logEmpty: string;
+  };
 };
 
 export const dictionaries: Record<Locale, Dictionary> = {
@@ -105,6 +126,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       hil: "System overview",
       ook: "OOK demodulation",
       bits: "Bit analysis",
+      live: "Live hardware",
     },
     sections: {
       flow: "Signal path",
@@ -283,6 +305,34 @@ export const dictionaries: Record<Locale, Dictionary> = {
         body: "ZeroMQ is a messaging layer used here to move decoded data between processing blocks.",
       },
     ],
+    live: {
+      title: "Live hardware pipeline",
+      intro:
+        "Real ESP32 TX node → ESP-NOW → ESP32-S3 Gateway → USB → edge-gateway → control-plane. Press BOOT on the TX node to trigger ACTION_TRIGGERED.",
+      edge: "Edge gateway",
+      controlPlane: "Control plane",
+      up: "up",
+      down: "down",
+      streamConnected: "Live event stream",
+      streamConnecting: "Connecting to event stream...",
+      backendError:
+        "Cannot reach the live pipeline. In another terminal run: ./scripts/run_local.sh",
+      framesDecoded: "Frames decoded",
+      eventsBuffered: "Events buffered",
+      lastAction: "Last ACTION_TRIGGERED",
+      noActionYet: "—",
+      instructionsTitle: "How to test",
+      instructions: [
+        "Terminal 1: ./scripts/run_local.sh (Gateway USB on usbmodem, not TX usbserial)",
+        "Terminal 2: ./scripts/run_live_dashboard.sh (this dashboard)",
+        "Short-press BOOT (GPIO0) on the TX ESP32 while it is near the Gateway",
+        "Watch for ACTION_TRIGGERED lines in the log below (BoolCmd true)",
+      ],
+      logTitle: "Pipeline log",
+      logIntro:
+        "Mirrors control-plane output: telemetry heartbeats every ~2s and ACTION_TRIGGERED on BOOT press.",
+      logEmpty: "Waiting for telemetry. Ensure run_local.sh is running and Gateway USB is connected.",
+    },
   },
   "zh-Hant": {
     languageName: "繁體中文",
@@ -299,6 +349,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       hil: "系統總覽",
       ook: "OOK 解調",
       bits: "位元分析",
+      live: "Live 硬體",
     },
     sections: {
       flow: "訊號路徑",
@@ -472,5 +523,31 @@ export const dictionaries: Record<Locale, Dictionary> = {
         body: "ZeroMQ 是訊息傳遞工具。此處用來在處理模組之間傳送解碼後的資料。",
       },
     ],
+    live: {
+      title: "Live 硬體管線",
+      intro:
+        "真實 ESP32 TX 節點 → ESP-NOW → ESP32-S3 Gateway → USB → edge-gateway → control-plane。在 TX 板上短按 BOOT 可觸發 ACTION_TRIGGERED。",
+      edge: "Edge gateway",
+      controlPlane: "Control plane",
+      up: "連線中",
+      down: "離線",
+      streamConnected: "即時事件串流",
+      streamConnecting: "連線事件串流中...",
+      backendError: "無法連線至 Live 管線。請在另一個終端執行：./scripts/run_local.sh",
+      framesDecoded: "已解碼封包",
+      eventsBuffered: "緩衝事件數",
+      lastAction: "最近 ACTION_TRIGGERED",
+      noActionYet: "—",
+      instructionsTitle: "測試步驟",
+      instructions: [
+        "終端 1：./scripts/run_local.sh（Gateway 用 usbmodem，不是 TX 的 usbserial）",
+        "終端 2：./scripts/run_live_dashboard.sh（本儀表板）",
+        "TX ESP32 靠近 Gateway 時，短按 BOOT（GPIO0）",
+        "在下方 log 觀察 ACTION_TRIGGERED（BoolCmd true）",
+      ],
+      logTitle: "管線日誌",
+      logIntro: "對應 control-plane 輸出：約每 2 秒 heartbeat，按 BOOT 時出現 ACTION_TRIGGERED。",
+      logEmpty: "等待遙測資料。請確認 run_local.sh 已執行且 Gateway USB 已連接。",
+    },
   },
 };

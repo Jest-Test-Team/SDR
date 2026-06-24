@@ -1,4 +1,4 @@
-import type { PipelineSnapshot, SimConfig, TelemetryEvent, Kpis } from "./types";
+import type { PipelineSnapshot, SimConfig, TelemetryEvent, Kpis, LiveEvent, LiveStatus } from "./types";
 
 const API_BASE = "";
 
@@ -46,4 +46,41 @@ export function wsUrl(): string {
     return "ws://127.0.0.1:8090/ws/live";
   }
   return "";
+}
+
+export async function fetchLiveEvents(): Promise<LiveEvent[]> {
+  const res = await fetch(`${API_BASE}/api/v1/live/events`);
+  if (!res.ok) throw new Error("live events fetch failed");
+  return res.json();
+}
+
+export async function fetchLiveStatus(): Promise<LiveStatus> {
+  const res = await fetch(`${API_BASE}/api/v1/live/status`);
+  if (!res.ok) throw new Error("live status fetch failed");
+  return res.json();
+}
+
+export function liveStreamUrl(): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/api/v1/live/stream`;
+  }
+  return "";
+}
+
+export async function probeEdgeHealth(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/live/edge/health`);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function probeControlPlaneHealth(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/live/cp/health`);
+    return res.ok;
+  } catch {
+    return false;
+  }
 }

@@ -10,10 +10,11 @@ import {
 import { dictionaries, type Dictionary, type Locale } from "@/lib/i18n";
 import type { Kpis, PipelineSnapshot, SimConfig, TelemetryEvent } from "@/lib/types";
 import { BitCompare } from "./BitCompare";
+import { LiveHardwarePanel } from "./LiveHardwarePanel";
 import { PipelineFlow } from "./PipelineFlow";
 import { WaveformPanel } from "./WaveformPanel";
 
-type Tab = "hil" | "ook" | "bits";
+type Tab = "hil" | "ook" | "bits" | "live";
 
 const MODE_OPTIONS: { value: SimConfig["mode"] }[] = [
   { value: "EspNow" },
@@ -161,6 +162,7 @@ export function HilDashboard() {
                 ["hil", t.tabs.hil],
                 ["ook", t.tabs.ook],
                 ["bits", t.tabs.bits],
+                ["live", t.tabs.live],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -181,6 +183,8 @@ export function HilDashboard() {
           {backendError}
         </div>
       )}
+
+      {tab === "live" && <LiveHardwarePanel copy={t.live} />}
 
       {tab === "hil" && (
         <>
@@ -313,6 +317,7 @@ export function HilDashboard() {
         </div>
       )}
 
+      {tab !== "live" && (
       <div className="control-panel panel">
         <h3>{t.sections.controls}</h3>
         <p className="panel-note">{t.controls.intro}</p>
@@ -426,6 +431,7 @@ export function HilDashboard() {
           {busy ? t.controls.sending : t.controls.send}
         </button>
       </div>
+      )}
     </div>
   );
 }

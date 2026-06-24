@@ -58,3 +58,19 @@ export interface PipelineSnapshot {
   kpis: Kpis;
   event: TelemetryEvent;
 }
+
+export interface LiveEvent {
+  ts_ms: number;
+  level: "info" | "warn" | "action" | string;
+  source: string;
+  message: string;
+  node_id: number | null;
+  seq: number | null;
+  payload: string | null;
+}
+
+export interface LiveStatus {
+  frames_decoded: number;
+  events_buffered: number;
+  last_action: { node_id: number; seq: number } | null;
+}
