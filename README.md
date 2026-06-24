@@ -50,23 +50,52 @@ cd web/hil-dashboard && npm install && npm run dev
 ### Prerequisites
 
 - Rust 1.85+
-- `espup` + `cargo-espflash` for firmware
+- Firmware toolchain (one-time setup):
+  ```bash
+  cargo install espup espflash ldproxy --locked
+  espup install -t esp32,esp32s3 -f ~/export-esp.sh
+  brew install ninja zeromq pkgconf   # macOS
+  ```
+  Each new terminal: `source ~/export-esp.sh` and `export PATH="$HOME/.cargo/bin:$PATH"`.
 - `libzmq` (`brew install zeromq pkgconf` on macOS, `apt install libzmq3-dev` on Linux)
-- Python 3 + `pyzmq` for simulation injector
+- Python 3 + `pyzmq` for simulation injector (`pip install pyzmq`)
 
 ### 1. Flash Firmware
 
+List serial ports (macOS use `/dev/cu.*`, not `ttyUSB*`):
+
 ```bash
-./scripts/flash_tx.sh /dev/ttyUSB0 460800 --monitor
-./scripts/flash_gw.sh /dev/ttyUSB1 921600 --monitor
+ls /dev/cu.* | grep -v Bluetooth
 ```
 
-UART CLI on TX node: `TRIGGER` / `RELEASE`
+**ESP32-S3 Gateway** (already flashed example MAC `14:C1:9F:CB:51:B4`):
+
+```bash
+./scripts/flash_gw.sh /dev/cu.usbserial-110 115200 --monitor
+```
+
+**ESP32 TX Node** (×2, set unique `NODE_ID`; point `GATEWAY_MAC` at gateway):
+
+```bash
+# TX #1
+GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=1 \
+  ./scripts/flash_tx.sh /dev/cu.usbserial-TX1 115200 --monitor
+
+# TX #2 (unplug gateway, plug second ESP32, use its port)
+GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=2 \
+  ./scripts/flash_tx.sh /dev/cu.usbserial-TX2 115200 --monitor
+```
+
+Notes:
+
+- Replace port names with your actual `/dev/cu.usbserial-*` (do **not** use placeholder `XXXX`).
+- If flash fails at high baud, use `115200` for `espflash`; runtime UART on gateway remains 921600.
+- UART CLI on TX node: `TRIGGER` / `RELEASE` (115200 default on ESP32 UART0).
 
 ### 2. Run Pipeline (PC)
 
 ```bash
-./scripts/run_local.sh
+GW_PORT=/dev/cu.usbserial-110 GW_BAUD=921600 ./scripts/run_local.sh
 ```
 
 ### 3. Simulate Without Hardware
@@ -106,10 +135,17 @@ infrastructure/     Dockerfiles
 ## Development
 
 ```bash
+# Host services (no ESP toolchain)
 cargo test --workspace --lib
 cargo test -p control-plane --test sim_pipeline
-cargo build --release -p esp32-tx-node -p esp32s3-gateway
+cargo test -p hil-simulator --lib
+
+# Firmware (requires esp toolchain + source ~/export-esp.sh)
+./scripts/flash_gw.sh /dev/cu.usbserial-110 115200
+./scripts/flash_tx.sh /dev/cu.usbserial-TX1 115200
 ```
+
+First firmware build downloads ESP-IDF into `.embuild/` (~10–20 min).
 
 ## CI/CD
 

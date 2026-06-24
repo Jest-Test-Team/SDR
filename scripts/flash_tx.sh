@@ -23,10 +23,8 @@ cargo +esp build --release -p esp32-tx-node \
   --config 'env.ESP_IDF_SYS_ROOT_CRATE="esp32-tx-node"'
 
 BIN="${ROOT}/target/xtensa-esp32-espidf/release/esp32-tx-node"
-echo "Flashing to ${PORT} at ${BAUD} baud..."
-espflash flash --port "${PORT}" --baud "${BAUD}" "${BIN}"
-
 if [[ "${3:-}" == "--monitor" ]]; then
-    echo "Starting monitor..."
-    espflash monitor --port "${PORT}" --baud "${BAUD}"
+    espflash flash --port "${PORT}" --baud "${BAUD}" --monitor "${BIN}"
+else
+    espflash flash --port "${PORT}" --baud "${BAUD}" "${BIN}"
 fi
