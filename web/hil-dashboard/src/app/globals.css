@@ -118,6 +118,34 @@ body {
   padding: 1rem;
 }
 
+.sidecar-status {
+  display: grid;
+  grid-template-columns: minmax(140px, max-content) 1fr;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #12151b;
+}
+
+.sidecar-status span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.sidecar-status strong {
+  color: var(--green);
+  font-size: 0.95rem;
+}
+
+.sidecar-status small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .panel h3 {
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
