@@ -15,7 +15,7 @@ OOK demodulator.
 
 | Dashboard concept | Firmware support | Notes |
 | --- | --- | --- |
-| Transport mode | Partial | Firmware is ESP-NOW only. `433 MHz OOK` is simulator/SDR-path behavior. |
+| Transport mode | Partial | Firmware is ESP-NOW only. `SoftwareSim` and `433 MHz OOK` are simulator/SDR-path behavior. |
 | 8-bit transmit data | Yes, runtime | The dashboard/edge gateway can set the TX node BOOT payload byte. Heartbeats remain `BoolCmd(false)`. |
 | TX power | Yes, build-time and runtime | Set `TX_POWER_DBM` when flashing, or apply it from the dashboard through the live edge gateway. ESP-IDF accepts quarter-dBm units; firmware exposes a clamped integer dBm setting. |
 | SNR | No | SNR is an observed or simulated channel condition, not a setting the two ESP32 boards can force by themselves. |
@@ -45,6 +45,18 @@ The runtime command currently applies:
 The same API reports `snr_db`, `noise_level`, `filter_bw_mhz`, `threshold`,
 non-ESP-NOW modes, and `replay_guard` as unsupported for firmware because they
 belong to the simulator, SDR path, or control-plane rules.
+
+## Software-sim helpers
+
+The workspace now includes a host-side Rust crate at `firmware/software-sim`
+that emits the same frame/control bytes used by the real boards:
+
+- `TelemetryFrame` bytes for the ESP32 TX node path.
+- UART `SDRCTL,...` control lines for the ESP32-S3 gateway.
+- Shared helpers for software-sim tooling and tests.
+
+This crate is for protocol generation and test harnesses. It does not replace
+the embedded ESP32 firmware images.
 
 ## Flashing with default TX power
 

@@ -278,8 +278,7 @@ pub fn run_trigger(
     let latency = if software_sim {
         5
     } else {
-        (20 + (bits.error_indices.len() as u32 * 5) + if packet_ok { 5 } else { 30 })
-            .clamp(15, 120)
+        (20 + (bits.error_indices.len() as u32 * 5) + if packet_ok { 5 } else { 30 }).clamp(15, 120)
     };
     let rssi = if software_sim {
         0.0
@@ -432,5 +431,18 @@ mod tests {
         let mut kpis = Kpis::default();
         let snap = run_trigger(&config, 1, true, None, &mut kpis);
         assert!(snap.bits.ber >= 0.0);
+    }
+
+    #[test]
+    fn software_sim_mode_bypasses_channel_errors() {
+        let config = SimConfig {
+            mode: TransmissionMode::SoftwareSim,
+            ..Default::default()
+        };
+        let mut kpis = Kpis::default();
+        let snap = run_trigger(&config, 2, true, None, &mut kpis);
+        assert!(snap.packet_ok);
+        assert_eq!(snap.hardware_mode, "software_sim_protocol");
+        assert_eq!(snap.bits.ber, 0.0);
     }
 }

@@ -261,7 +261,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         "These controls change the simulated radio channel and receiver. After changing values, send a command to see how the waveform, decoded bits, and KPIs respond.",
       mode: {
         title: "Transmission mode",
-        body: "Chooses the simulated wireless format. OOK exposes the radio waveform stages used by this dashboard.",
+        body: "Chooses the simulated wireless format. Software Sim Protocol bypasses RF impairment and sends a direct sidecar frame; OOK exposes the radio waveform stages used by this dashboard.",
       },
       dataBits: {
         title: "Payload bits (8-bit)",
@@ -502,7 +502,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
         "這些控制項會改變模擬無線通道與接收器設定。調整後發送指令，就能觀察波形、還原位元與 KPI 如何變化。",
       mode: {
         title: "傳輸模式",
-        body: "選擇模擬的無線格式。OOK 會顯示此儀表板使用的無線波形階段。",
+        body: "選擇模擬的無線格式。Software Sim Protocol 會略過 RF 擾動，直接送出 sidecar 封包；OOK 會顯示此儀表板使用的無線波形階段。",
       },
       dataBits: {
         title: "傳輸資料（8-bit）",
