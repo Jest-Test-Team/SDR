@@ -54,6 +54,28 @@ that emits the same frame/control bytes used by the real boards:
 - `TelemetryFrame` bytes for the ESP32 TX node path.
 - UART `SDRCTL,...` control lines for the ESP32-S3 gateway.
 - Shared helpers for software-sim tooling and tests.
+- Secure Telemetry Gateway command model (`gateway` module): hardware-free
+  simulation of the ESP32-S3 AP-STA gateway used by `hil-simulator` and tests.
+
+### Secure Telemetry Gateway commands
+
+The `firmware-software-sim::gateway` module models the AP-STA gateway described
+in the implementation guide. The same command set is mapped onto `esp-idf-svc`
+calls on the device and onto the hardware-free `GatewaySim` for the dashboard /
+HIL simulator:
+
+| Command | On-device mapping | Effect |
+| --- | --- | --- |
+| `CMD_NET_TOGGLE_DOWNSTREAM` | `wifi.set_configuration(Client \| Mixed)` | Sever/restore the downstream AP (`Sta` ↔ `ApSta`) |
+| `CMD_SNMP_SET` | TCP JSON to endpoint | Write a simulated OID (`sim_snmp_v3`) |
+| `CMD_SNMP_GET` | TCP JSON to endpoint | Read a simulated OID |
+| `CMD_DEAUTH_STA` | `esp_wifi_deauth_sta` | Kick a station by MAC |
+| `CMD_SYS_HEALTH` | `esp_get_free_heap_size` | Report heap / link / station count |
+| `CMD_REGISTER_NODE` | AP STA-join event | Track a downstream endpoint |
+
+The HIL simulator exposes these over `GET /api/v1/gateway` and
+`POST /api/v1/gateway/command`, and the web dashboard's **Secure Gateway** page
+drives them.
 
 This crate is for protocol generation and test harnesses. It does not replace
 the embedded ESP32 firmware images.
