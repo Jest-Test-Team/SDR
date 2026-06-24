@@ -12,7 +12,11 @@ export RUST_MIN_STACK=16777216
 
 cd "${ROOT}"
 
+export GATEWAY_MAC="${GATEWAY_MAC:-FF:FF:FF:FF:FF:FF}"
+export NODE_ID="${NODE_ID:-1}"
+
 echo "Building esp32-tx-node..."
+echo "  GATEWAY_MAC=${GATEWAY_MAC}  NODE_ID=${NODE_ID}"
 cargo +esp build --release -p esp32-tx-node \
   --config 'build.target="xtensa-esp32-espidf"' \
   --config 'unstable.build-std=["std","panic_abort"]' \

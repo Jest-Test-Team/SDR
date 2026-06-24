@@ -16,14 +16,21 @@ use heapless::String;
 use protocol::frame::{Payload, TelemetryFrame};
 use protocol::encode_espnow;
 
-const GATEWAY_MAC: &str = env!("GATEWAY_MAC", "FF:FF:FF:FF:FF:FF");
+const GATEWAY_MAC: &str = env!("GATEWAY_MAC");
 const NODE_ID: u8 = {
-    match option_env!("NODE_ID") {
-        Some(s) => parse_node_id(s),
-        None => 1,
-    }
+    const ID_STR: &str = env!("NODE_ID");
+    parse_node_id(ID_STR)
 };
 const DEBOUNCE_MS: u32 = 50;
+const ESPNOW_CHANNEL: u8 = 1;
+
+fn set_wifi_channel(channel: u8) {
+    use esp_idf_svc::sys::{esp_wifi_set_channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE};
+    esp_idf_svc::esp!(unsafe {
+        esp_wifi_set_channel(channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE)
+    })
+    .expect("esp_wifi_set_channel");
+}
 
 static SEQ: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 static UART_TRIGGER: AtomicBool = AtomicBool::new(false);
@@ -140,13 +147,18 @@ fn main() -> ! {
     }))
     .unwrap();
     wifi.start().unwrap();
+    set_wifi_channel(ESPNOW_CHANNEL);
 
     let esp_now = EspNow::take().unwrap();
     let gateway_mac = parse_mac(GATEWAY_MAC);
 
     let mut peer = PeerInfo::default();
     peer.peer_addr = gateway_mac;
+    peer.channel = ESPNOW_CHANNEL;
     peer.encrypt = false;
+    if esp_now.peer_exists(gateway_mac).unwrap_or(false) {
+        let _ = esp_now.del_peer(gateway_mac);
+    }
     esp_now.add_peer(peer).unwrap();
     log::info!(
         "ESP-NOW ready, gateway={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
@@ -158,7 +170,7 @@ fn main() -> ! {
         gateway_mac[5]
     );
 
-    let mut button = PinDriver::input(peripherals.pins.gpio0, Pull::Up).unwrap();
+    let button = PinDriver::input(peripherals.pins.gpio0, Pull::Up).unwrap();
     let mut uart = UartDriver::new(
         peripherals.uart0,
         peripherals.pins.gpio1,
@@ -189,6 +201,7 @@ fn main() -> ! {
             let now = now_ms();
             if now.saturating_sub(last_button_ms) >= DEBOUNCE_MS as u64 {
                 last_button_ms = now;
+                log::info!("BOOT pressed, sending ESP-NOW");
                 send_bool(&esp_now, gateway_mac, true);
             }
         }

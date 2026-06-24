@@ -12,6 +12,10 @@ export RUST_MIN_STACK=16777216
 
 cd "${ROOT}"
 
+SDKDEF="${ROOT}/firmware/esp32s3-gateway/sdkconfig.defaults"
+# Force sdkconfig regen when defaults change
+rm -f "${ROOT}"/target/xtensa-esp32s3-espidf/release/build/esp-idf-sys-*/out/sdkconfig 2>/dev/null || true
+
 echo "Building esp32s3-gateway..."
 cargo +esp build --release -p esp32s3-gateway \
   --config 'build.target="xtensa-esp32s3-espidf"' \
@@ -20,7 +24,8 @@ cargo +esp build --release -p esp32s3-gateway \
   --config 'target."cfg(target_os = \"espidf\")".rustflags=["--cfg","espidf_time64"]' \
   --config 'env.ESP_IDF_TOOLS_INSTALL_DIR="workspace"' \
   --config 'env.MCU="esp32s3"' \
-  --config 'env.ESP_IDF_SYS_ROOT_CRATE="esp32s3-gateway"'
+  --config 'env.ESP_IDF_SYS_ROOT_CRATE="esp32s3-gateway"' \
+  --config "env.ESP_IDF_SDKCONFIG_DEFAULTS=\"${SDKDEF}\""
 
 BIN="${ROOT}/target/xtensa-esp32s3-espidf/release/esp32s3-gateway"
 echo "Flashing to ${PORT} at ${BAUD} baud..."

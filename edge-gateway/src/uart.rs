@@ -3,7 +3,7 @@ use protocol::{decode_frame, encode_frame};
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tokio::time::sleep;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
 pub fn split_cobs_frames(buffer: &mut Vec<u8>) -> Vec<Vec<u8>> {
     let mut frames = Vec::new();
@@ -58,10 +58,10 @@ pub async fn run_uart_reader(
                     for frame in split_cobs_frames(&mut buffer) {
                         match decode_frame(&frame) {
                             Ok(decoded) => {
-                                debug!(
+                                info!(
                                     seq = decoded.seq,
                                     node_id = decoded.node_id,
-                                    "decoded UART frame"
+                                    "UART frame received"
                                 );
                                 let wire = encode_frame(&decoded).context("re-encode frame")?;
                                 if tx.send(wire).await.is_err() {

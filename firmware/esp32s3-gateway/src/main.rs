@@ -16,6 +16,15 @@ use protocol::{decode_espnow, encode_frame, ESP_NOW_VENDOR_ID};
 
 const MAX_PENDING: usize = 8;
 const MAX_FRAME: usize = 256;
+const ESPNOW_CHANNEL: u8 = 1;
+
+fn set_wifi_channel(channel: u8) {
+    use esp_idf_svc::sys::{esp_wifi_set_channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE};
+    esp_idf_svc::esp!(unsafe {
+        esp_wifi_set_channel(channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE)
+    })
+    .expect("esp_wifi_set_channel");
+}
 
 type FrameBuf = heapless::Vec<u8, MAX_FRAME>;
 
@@ -71,6 +80,7 @@ fn main() -> ! {
     }))
     .unwrap();
     wifi.start().unwrap();
+    set_wifi_channel(ESPNOW_CHANNEL);
 
     let esp_now = EspNow::take().unwrap();
     esp_now
