@@ -1,12 +1,12 @@
 use axum::{
+    Json, Router,
     extract::{
-        ws::{Message, WebSocket, WebSocketUpgrade},
         State,
+        ws::{Message, WebSocket, WebSocketUpgrade},
     },
     http::StatusCode,
     response::IntoResponse,
     routing::{get, post},
-    Json, Router,
 };
 use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
@@ -91,11 +91,7 @@ async fn handle_socket(socket: WebSocket, state: SharedState) {
         "events": state.events.read().await.clone(),
     });
 
-    if sender
-        .send(Message::Text(init.to_string()))
-        .await
-        .is_err()
-    {
+    if sender.send(Message::Text(init.to_string())).await.is_err() {
         return;
     }
 

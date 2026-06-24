@@ -22,13 +22,13 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libzmq3-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libzmq3-dev libudev-dev pkg-config
       - name: cargo fmt
-        run: cargo fmt --check --workspace
+        run: cargo fmt --all --check
       - name: cargo clippy
-        run: cargo clippy --workspace --all-targets
+        run: cargo clippy --workspace --exclude esp32-tx-node --exclude esp32s3-gateway --all-targets
       - name: cargo check
-        run: cargo check --workspace --all-targets
+        run: cargo check --workspace --exclude esp32-tx-node --exclude esp32s3-gateway --all-targets
 
   test:
     name: Unit Tests
@@ -39,9 +39,9 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libzmq3-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libzmq3-dev libudev-dev pkg-config
       - name: cargo test (lib only)
-        run: cargo test --workspace --lib
+        run: cargo test --workspace --exclude esp32-tx-node --exclude esp32s3-gateway --lib
       - name: Integration tests
         run: cargo test -p control-plane --test sim_pipeline
       - name: HIL simulator tests
@@ -50,16 +50,20 @@ jobs:
   build-firmware:
     name: Build Firmware (Cross-compile)
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y \
+          cmake ninja-build python3 python3-venv git wget \
+          libssl-dev libusb-1.0-0-dev pkg-config
+      - name: Install Rust for Xtensa (espup)
+        uses: esp-rs/xtensa-toolchain@v1
         with:
-          targets: xtensa-esp32-none-elf, xtensa-esp32s3-none-elf
-      - name: Install espup/espflash
-        run: |
-          cargo install espup cargo-espflash --locked
-          espup install --toolchain-version 0.49.0
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          default: true
+          buildtargets: esp32,esp32s3
+          ldproxy: true
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
       - name: Build esp32-tx-node

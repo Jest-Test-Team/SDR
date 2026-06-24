@@ -4,10 +4,14 @@ use control_plane::{live::LiveBus, store::TelemetryStore, subscriber};
 use protocol::ReplayGuard;
 use std::sync::{Arc, Mutex};
 use tracing::info;
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt};
 
 #[derive(Parser, Debug)]
-#[command(name = "control-plane", version, about = "Telemetry Processing & Rules Engine")]
+#[command(
+    name = "control-plane",
+    version,
+    about = "Telemetry Processing & Rules Engine"
+)]
 struct Args {
     #[arg(long, env = "ZMQ_ENDPOINT", default_value = "tcp://127.0.0.1:5556")]
     zmq_endpoint: String,
@@ -31,8 +35,7 @@ async fn main() -> Result<()> {
     let replay = Arc::new(Mutex::new(ReplayGuard::new()));
     let live_bus = LiveBus::new(200);
 
-    let app = control_plane::metrics::router()
-        .merge(control_plane::live::router(live_bus.clone()));
+    let app = control_plane::metrics::router().merge(control_plane::live::router(live_bus.clone()));
     let health_addr = format!("0.0.0.0:{}", args.health_port);
     let health_listener = tokio::net::TcpListener::bind(&health_addr).await?;
     let health_server = tokio::spawn(async move {

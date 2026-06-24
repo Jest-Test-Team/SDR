@@ -3,16 +3,16 @@ use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use axum::{
+    Json, Router,
     extract::State,
     response::sse::{Event, KeepAlive, Sse},
     routing::get,
-    Json, Router,
 };
 use futures::stream::Stream;
 use protocol::frame::{Payload, TelemetryFrame};
 use serde::Serialize;
-use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
+use tokio_stream::wrappers::BroadcastStream;
 
 use crate::rules::RuleOutcome;
 
@@ -88,7 +88,12 @@ impl LiveBus {
         *self.inner.last_action_seq.lock().expect("live mutex")
     }
 
-    pub fn record_frame(&self, frame: &TelemetryFrame, outcome: RuleOutcome, replay_rejected: bool) {
+    pub fn record_frame(
+        &self,
+        frame: &TelemetryFrame,
+        outcome: RuleOutcome,
+        replay_rejected: bool,
+    ) {
         if replay_rejected {
             self.push(LiveEvent {
                 ts_ms: now_ms(),
@@ -182,7 +187,9 @@ async fn stream_handler(
     let initial = bus.recent();
     let rx = bus.subscribe();
     let history = tokio_stream::iter(initial.into_iter().map(|ev| {
-        Ok(Event::default().json_data(ev).unwrap_or_else(|_| Event::default()))
+        Ok(Event::default()
+            .json_data(ev)
+            .unwrap_or_else(|_| Event::default()))
     }));
     let live = BroadcastStream::new(rx).map(|msg| {
         let ev = msg.unwrap_or_else(|_| LiveEvent {
@@ -194,7 +201,9 @@ async fn stream_handler(
             seq: None,
             payload: None,
         });
-        Ok(Event::default().json_data(ev).unwrap_or_else(|_| Event::default()))
+        Ok(Event::default()
+            .json_data(ev)
+            .unwrap_or_else(|_| Event::default()))
     });
     Sse::new(history.chain(live)).keep_alive(KeepAlive::default())
 }

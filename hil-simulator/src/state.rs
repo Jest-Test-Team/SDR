@@ -1,10 +1,10 @@
-use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use protocol::ReplayGuard;
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{RwLock, broadcast};
 
-use crate::sim::{PipelineSnapshot, SimConfig, Kpis, TelemetryEvent};
+use crate::sim::{Kpis, PipelineSnapshot, SimConfig, TelemetryEvent};
 
 pub struct AppState {
     pub config: RwLock<SimConfig>,

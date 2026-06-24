@@ -27,11 +27,11 @@ jobs:
       - name: Flash TX Node (ESP32)
         run: |
           cargo build --release -p esp32-tx-node
-          espflash flash --port /dev/ttyUSB_TX target/xtensa-esp32-none-elf/release/esp32-tx-node
+          espflash flash --port /dev/ttyUSB_TX target/xtensa-esp32-espidf/release/esp32-tx-node
       - name: Flash Gateway (ESP32-S3)
         run: |
           cargo build --release -p esp32s3-gateway
-          espflash flash --port /dev/ttyUSB_GW target/xtensa-esp32s3-none-elf/release/esp32s3-gateway
+          espflash flash --port /dev/ttyUSB_GW target/xtensa-esp32s3-espidf/release/esp32s3-gateway
       - name: Start Edge Gateway
         run: |
           cargo run -p edge-gateway --release &

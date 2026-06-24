@@ -12,7 +12,7 @@ use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
 use heapless::Deque;
-use protocol::{decode_espnow, encode_frame, ESP_NOW_VENDOR_ID};
+use protocol::{ESP_NOW_VENDOR_ID, decode_espnow, encode_frame};
 
 const MAX_PENDING: usize = 8;
 const MAX_FRAME: usize = 256;

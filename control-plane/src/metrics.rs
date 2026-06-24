@@ -1,9 +1,13 @@
-use axum::{routing::get, Router};
+use axum::{Router, routing::get};
 use prometheus::{Encoder, IntCounter, TextEncoder};
 use std::sync::LazyLock;
 
 pub static FRAMES_DECODED: LazyLock<IntCounter> = LazyLock::new(|| {
-    IntCounter::new("frames_decoded_total", "Successfully decoded telemetry frames").unwrap()
+    IntCounter::new(
+        "frames_decoded_total",
+        "Successfully decoded telemetry frames",
+    )
+    .unwrap()
 });
 
 pub fn router() -> Router {

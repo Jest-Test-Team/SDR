@@ -7,7 +7,9 @@ pub async fn run_publisher(endpoint: String, mut rx: mpsc::Receiver<Vec<u8>>) ->
     tokio::task::spawn_blocking(move || -> Result<()> {
         let ctx = zmq::Context::new();
         let socket = ctx.socket(zmq::PUB).context("create ZMQ PUB socket")?;
-        socket.bind(&endpoint).with_context(|| format!("bind {endpoint}"))?;
+        socket
+            .bind(&endpoint)
+            .with_context(|| format!("bind {endpoint}"))?;
         info!("ZMQ PUB bound to {endpoint}");
 
         while let Some(frame) = rx.blocking_recv() {

@@ -1,7 +1,7 @@
 use esp_idf_svc::espnow::{EspNow, PeerInfo};
 use esp_idf_svc::sys::{
-    esp_wifi_set_channel, esp_wifi_set_max_tx_power, esp_wifi_set_ps,
-    wifi_ps_type_t_WIFI_PS_NONE, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE,
+    esp_wifi_set_channel, esp_wifi_set_max_tx_power, esp_wifi_set_ps, wifi_ps_type_t_WIFI_PS_NONE,
+    wifi_second_chan_t_WIFI_SECOND_CHAN_NONE,
 };
 
 pub const ESPNOW_CHANNEL: u8 = 1;

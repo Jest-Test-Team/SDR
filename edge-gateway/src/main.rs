@@ -5,7 +5,7 @@ mod zmq_pub;
 use anyhow::Result;
 use clap::Parser;
 use tracing::info;
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt};
 
 #[derive(Parser, Debug)]
 #[command(name = "edge-gateway", version, about = "UART to ZMQ Bridge")]
@@ -40,7 +40,8 @@ async fn main() -> Result<()> {
     });
 
     let uart_port = args.port.clone();
-    let uart_handle = tokio::spawn(async move { uart::run_uart_reader(uart_port, args.baud, tx).await });
+    let uart_handle =
+        tokio::spawn(async move { uart::run_uart_reader(uart_port, args.baud, tx).await });
 
     tokio::select! {
         res = uart_handle => {

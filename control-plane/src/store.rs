@@ -15,7 +15,9 @@ impl TelemetryStore {
     pub fn insert(&self, frame: &TelemetryFrame) -> Result<()> {
         let key = format!("{}:{}", frame.node_id, frame.seq);
         let value = postcard::to_allocvec(frame).context("serialize frame")?;
-        self.db.insert(key.as_bytes(), value).context("sled insert")?;
+        self.db
+            .insert(key.as_bytes(), value)
+            .context("sled insert")?;
         self.db.flush().ok();
         Ok(())
     }

@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use axum::Router;
 use clap::Parser;
-use hil_simulator::{api, AppState};
+use hil_simulator::{AppState, api};
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
@@ -32,9 +32,7 @@ async fn main() -> anyhow::Result<()> {
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let app = Router::new()
-        .merge(api::router(state))
-        .layer(cors);
+    let app = Router::new().merge(api::router(state)).layer(cors);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
     info!("Listening on http://{addr}");

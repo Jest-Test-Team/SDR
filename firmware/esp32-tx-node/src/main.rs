@@ -11,12 +11,12 @@ use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::sys;
 use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
-use protocol::frame::{Payload, TelemetryFrame};
 use protocol::encode_espnow;
+use protocol::frame::{Payload, TelemetryFrame};
 
 use crate::espnow_setup::{
-    add_gateway_peer, disable_wifi_power_save, lock_wifi_channel, set_max_tx_power_dbm,
-    ESPNOW_CHANNEL,
+    ESPNOW_CHANNEL, add_gateway_peer, disable_wifi_power_save, lock_wifi_channel,
+    set_max_tx_power_dbm,
 };
 use crate::mac::parse_mac;
 
@@ -137,7 +137,8 @@ fn main() -> ! {
             if !button_down {
                 button_down = true;
                 last_button_ms = now_ms();
-            } else if !trigger_sent && now_ms().saturating_sub(last_button_ms) >= DEBOUNCE_MS as u64 {
+            } else if !trigger_sent && now_ms().saturating_sub(last_button_ms) >= DEBOUNCE_MS as u64
+            {
                 trigger_sent = true;
                 log::info!("BOOT pressed, sending ESP-NOW");
                 send_bool(&esp_now, gateway_mac, true);

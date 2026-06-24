@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use protocol::{decode_frame, ReplayGuard};
+use protocol::{ReplayGuard, decode_frame};
 use std::sync::{Arc, Mutex};
 use tracing::{info, warn};
 

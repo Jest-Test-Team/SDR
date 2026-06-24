@@ -24,11 +24,7 @@ pub fn split_cobs_frames(buffer: &mut Vec<u8>) -> Vec<Vec<u8>> {
     frames
 }
 
-pub async fn run_uart_reader(
-    port: String,
-    baud: u32,
-    tx: mpsc::Sender<Vec<u8>>,
-) -> Result<()> {
+pub async fn run_uart_reader(port: String, baud: u32, tx: mpsc::Sender<Vec<u8>>) -> Result<()> {
     use tokio::io::AsyncReadExt;
     use tokio_serial::SerialPortBuilderExt;
 

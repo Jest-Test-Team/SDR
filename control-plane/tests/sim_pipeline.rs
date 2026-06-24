@@ -1,6 +1,6 @@
 use control_plane::{rules::RuleOutcome, store::TelemetryStore, subscriber::process_frame};
 use protocol::frame::{Payload, TelemetryFrame};
-use protocol::{encode_frame, ReplayGuard};
+use protocol::{ReplayGuard, encode_frame};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tempfile::TempDir;
