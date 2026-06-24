@@ -3,10 +3,10 @@
 use core::cell::RefCell;
 use std::sync::Mutex;
 
-use esp_idf_svc::espnow::{EspNow, ReceiveInfo};
+use esp_idf_svc::espnow::{EspNow, PeerInfo, ReceiveInfo};
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
-use esp_idf_svc::hal::io::Write;
+use esp_idf_svc::hal::io::{Read, Write};
 use esp_idf_svc::hal::usb_serial::{UsbSerialConfig, UsbSerialDriver};
 use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
@@ -17,6 +17,7 @@ use protocol::{ESP_NOW_VENDOR_ID, decode_espnow, encode_frame};
 const MAX_PENDING: usize = 8;
 const MAX_FRAME: usize = 256;
 const ESPNOW_CHANNEL: u8 = 1;
+const BROADCAST_MAC: [u8; 6] = [0xFF; 6];
 
 fn lock_wifi_channel(channel: u8) {
     use esp_idf_svc::sys::{esp_wifi_set_channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE};
@@ -70,6 +71,50 @@ fn drain_to_usb(serial: &mut UsbSerialDriver<'_>) {
     }
 }
 
+fn add_broadcast_peer(esp_now: &EspNow<'_>) -> Result<(), esp_idf_svc::sys::EspError> {
+    if esp_now.peer_exists(BROADCAST_MAC).unwrap_or(false) {
+        esp_now.del_peer(BROADCAST_MAC)?;
+    }
+    let mut peer = PeerInfo::default();
+    peer.peer_addr = BROADCAST_MAC;
+    peer.channel = ESPNOW_CHANNEL;
+    peer.encrypt = false;
+    esp_now.add_peer(peer)
+}
+
+fn drain_control_from_usb(
+    serial: &mut UsbSerialDriver<'_>,
+    esp_now: &EspNow<'_>,
+    rx_buf: &mut [u8; 128],
+    line: &mut heapless::Vec<u8, 128>,
+) {
+    match serial.read(rx_buf) {
+        Ok(0) => {}
+        Ok(n) => {
+            for &byte in &rx_buf[..n] {
+                if byte == b'\n' {
+                    if line.starts_with(b"SDRCTL,") {
+                        match esp_now.send(BROADCAST_MAC, line.as_slice()) {
+                            Ok(()) => log::info!(
+                                "forwarded firmware control over ESP-NOW: {}",
+                                core::str::from_utf8(line.as_slice()).unwrap_or("<binary>")
+                            ),
+                            Err(e) => log::warn!("firmware control ESP-NOW send failed: {:?}", e),
+                        }
+                    }
+                    line.clear();
+                } else if line.push(byte).is_err() {
+                    log::warn!("firmware control line too long, dropping");
+                    line.clear();
+                }
+            }
+        }
+        Err(e) => {
+            log::warn!("USB serial read failed: {:?}", e);
+        }
+    }
+}
+
 #[unsafe(no_mangle)]
 fn main() -> ! {
     EspLogger::initialize_default();
@@ -92,6 +137,10 @@ fn main() -> ! {
 
     let esp_now = EspNow::take().unwrap();
     lock_wifi_channel(ESPNOW_CHANNEL);
+    match add_broadcast_peer(&esp_now) {
+        Ok(()) => log::info!("ESP-NOW broadcast control peer ready"),
+        Err(e) => log::warn!("add broadcast peer failed: {:?}", e),
+    }
     esp_now
         .register_recv_cb(|info: &ReceiveInfo, data: &[u8]| {
             log::info!(
@@ -143,9 +192,12 @@ fn main() -> ! {
     .unwrap();
 
     log::info!("Gateway ready (USB serial bridge to PC)");
+    let mut control_rx_buf = [0u8; 128];
+    let mut control_line = heapless::Vec::<u8, 128>::new();
 
     loop {
         drain_to_usb(&mut usb_serial);
+        drain_control_from_usb(&mut usb_serial, &esp_now, &mut control_rx_buf, &mut control_line);
         FreeRtos::delay_ms(5);
     }
 }

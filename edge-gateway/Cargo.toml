@@ -21,3 +21,4 @@ config = { workspace = true }
 clap = { workspace = true }
 axum = { workspace = true }
 prometheus = { workspace = true }
+serde = { workspace = true, features = ["derive"] }

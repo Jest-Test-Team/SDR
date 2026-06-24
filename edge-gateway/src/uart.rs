@@ -24,8 +24,13 @@ pub fn split_cobs_frames(buffer: &mut Vec<u8>) -> Vec<Vec<u8>> {
     frames
 }
 
-pub async fn run_uart_reader(port: String, baud: u32, tx: mpsc::Sender<Vec<u8>>) -> Result<()> {
-    use tokio::io::AsyncReadExt;
+pub async fn run_uart_reader(
+    port: String,
+    baud: u32,
+    tx: mpsc::Sender<Vec<u8>>,
+    mut control_rx: mpsc::Receiver<String>,
+) -> Result<()> {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio_serial::SerialPortBuilderExt;
 
     let mut buffer = Vec::with_capacity(4096);
@@ -45,35 +50,50 @@ pub async fn run_uart_reader(port: String, baud: u32, tx: mpsc::Sender<Vec<u8>>)
         };
 
         loop {
-            match serial.read(&mut read_buf).await {
-                Ok(0) => {
-                    sleep(Duration::from_millis(10)).await;
-                }
-                Ok(n) => {
-                    buffer.extend_from_slice(&read_buf[..n]);
-                    for frame in split_cobs_frames(&mut buffer) {
-                        match decode_frame(&frame) {
-                            Ok(decoded) => {
-                                info!(
-                                    seq = decoded.seq,
-                                    node_id = decoded.node_id,
-                                    "UART frame received"
-                                );
-                                let wire = encode_frame(&decoded).context("re-encode frame")?;
-                                if tx.send(wire).await.is_err() {
-                                    return Ok(());
+            tokio::select! {
+                read = serial.read(&mut read_buf) => {
+                    match read {
+                        Ok(0) => {
+                            sleep(Duration::from_millis(10)).await;
+                        }
+                        Ok(n) => {
+                            buffer.extend_from_slice(&read_buf[..n]);
+                            for frame in split_cobs_frames(&mut buffer) {
+                                match decode_frame(&frame) {
+                                    Ok(decoded) => {
+                                        info!(
+                                            seq = decoded.seq,
+                                            node_id = decoded.node_id,
+                                            "UART frame received"
+                                        );
+                                        let wire = encode_frame(&decoded).context("re-encode frame")?;
+                                        if tx.send(wire).await.is_err() {
+                                            return Ok(());
+                                        }
+                                    }
+                                    Err(e) => {
+                                        crate::metrics::DECODE_ERRORS.inc();
+                                        warn!("frame decode error: {}", e);
+                                    }
                                 }
                             }
-                            Err(e) => {
-                                crate::metrics::DECODE_ERRORS.inc();
-                                warn!("frame decode error: {}", e);
-                            }
+                        }
+                        Err(e) => {
+                            warn!("serial read error: {e}, reconnecting in 1s");
+                            break;
                         }
                     }
                 }
-                Err(e) => {
-                    warn!("serial read error: {e}, reconnecting in 1s");
-                    break;
+                Some(command) = control_rx.recv() => {
+                    if let Err(e) = serial.write_all(command.as_bytes()).await {
+                        warn!("serial control write failed: {e}, reconnecting in 1s");
+                        break;
+                    }
+                    if let Err(e) = serial.flush().await {
+                        warn!("serial control flush failed: {e}");
+                    } else {
+                        info!(command = command.trim(), "firmware control command sent");
+                    }
                 }
             }
         }

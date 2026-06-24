@@ -31,8 +31,9 @@ async fn main() -> Result<()> {
     info!("Health: :{}", args.health_port);
 
     let (tx, publisher_handle) = zmq_pub::spawn_publisher(args.zmq_endpoint.clone());
+    let (control_tx, control_rx) = tokio::sync::mpsc::channel(16);
 
-    let health_app = metrics::router();
+    let health_app = metrics::router(metrics::ControlState { tx: control_tx });
     let health_addr = format!("0.0.0.0:{}", args.health_port);
     let health_listener = tokio::net::TcpListener::bind(&health_addr).await?;
     let health_server = tokio::spawn(async move {
@@ -41,7 +42,7 @@ async fn main() -> Result<()> {
 
     let uart_port = args.port.clone();
     let uart_handle =
-        tokio::spawn(async move { uart::run_uart_reader(uart_port, args.baud, tx).await });
+        tokio::spawn(async move { uart::run_uart_reader(uart_port, args.baud, tx, control_rx).await });
 
     tokio::select! {
         res = uart_handle => {
