@@ -5,7 +5,7 @@ mod mac;
 
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use esp_idf_svc::espnow::{EspNow, BROADCAST};
+use esp_idf_svc::espnow::EspNow;
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
 use esp_idf_svc::hal::gpio::{PinDriver, Pull};
@@ -19,7 +19,7 @@ use heapless::String;
 use protocol::frame::{Payload, TelemetryFrame};
 use protocol::encode_espnow;
 
-use crate::espnow_setup::{add_gateway_peer, disable_wifi_power_save, ESPNOW_CHANNEL};
+use crate::espnow_setup::{add_gateway_peer, disable_wifi_power_save, lock_wifi_channel, ESPNOW_CHANNEL};
 use crate::mac::parse_mac;
 
 const GATEWAY_MAC: &str = env!("GATEWAY_MAC");
@@ -28,7 +28,7 @@ const NODE_ID: u8 = {
     parse_node_id(ID_STR)
 };
 const DEBOUNCE_MS: u32 = 50;
-const HEARTBEAT_MS: u64 = 5_000;
+const HEARTBEAT_MS: u64 = 2_000;
 
 static SEQ: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 static UART_TRIGGER: AtomicBool = AtomicBool::new(false);
@@ -70,22 +70,9 @@ fn send_bool(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], value: bool) {
         return;
     };
 
-    for dest in [gateway_mac, BROADCAST] {
-        match esp_now.send(dest, &packet) {
-            Ok(()) => log::info!(
-                "ESP-NOW sent node={} seq={} value={} dst={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
-                NODE_ID,
-                seq,
-                value,
-                dest[0],
-                dest[1],
-                dest[2],
-                dest[3],
-                dest[4],
-                dest[5]
-            ),
-            Err(e) => log::error!("ESP-NOW send failed: {:?}", e),
-        }
+    match esp_now.send(gateway_mac, &packet) {
+        Ok(()) => log::info!("ESP-NOW sent node={} seq={} value={}", NODE_ID, seq, value),
+        Err(e) => log::error!("ESP-NOW send failed: {:?}", e),
     }
 }
 
@@ -123,21 +110,25 @@ fn main() -> ! {
     }))
     .unwrap();
     wifi.start().unwrap();
+    lock_wifi_channel(ESPNOW_CHANNEL);
     disable_wifi_power_save();
 
     let esp_now = EspNow::take().unwrap();
+    lock_wifi_channel(ESPNOW_CHANNEL);
     let gateway_mac = parse_mac(GATEWAY_MAC);
-    log::info!("GATEWAY_MAC={} ch={}", GATEWAY_MAC, ESPNOW_CHANNEL);
-    add_gateway_peer(&esp_now, gateway_mac);
-    log::info!(
-        "ESP-NOW ready, gateway={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
-        gateway_mac[0],
-        gateway_mac[1],
-        gateway_mac[2],
-        gateway_mac[3],
-        gateway_mac[4],
-        gateway_mac[5]
-    );
+    match add_gateway_peer(&esp_now, gateway_mac) {
+        Ok(()) => log::info!(
+            "ESP-NOW ready, gateway={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X} ch={}",
+            gateway_mac[0],
+            gateway_mac[1],
+            gateway_mac[2],
+            gateway_mac[3],
+            gateway_mac[4],
+            gateway_mac[5],
+            ESPNOW_CHANNEL
+        ),
+        Err(e) => log::error!("add_peer failed: {:?}", e),
+    }
 
     let button = PinDriver::input(peripherals.pins.gpio0, Pull::Up).unwrap();
     let mut uart = UartDriver::new(

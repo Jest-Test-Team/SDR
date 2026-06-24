@@ -13,10 +13,19 @@ use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
 use heapless::Deque;
 use protocol::{decode_espnow, encode_frame, ESP_NOW_VENDOR_ID};
+use protocol::frame::{Payload, TelemetryFrame};
 
 const MAX_PENDING: usize = 8;
 const MAX_FRAME: usize = 256;
 const ESPNOW_CHANNEL: u8 = 1;
+
+fn lock_wifi_channel(channel: u8) {
+    use esp_idf_svc::sys::{esp_wifi_set_channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE};
+    esp_idf_svc::sys::esp!(unsafe {
+        esp_wifi_set_channel(channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE)
+    })
+    .expect("esp_wifi_set_channel");
+}
 
 static USB_TX_COUNT: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 
@@ -79,9 +88,11 @@ fn main() -> ! {
     }))
     .unwrap();
     wifi.start().unwrap();
-    log::info!("WiFi started on channel {}", ESPNOW_CHANNEL);
+    lock_wifi_channel(ESPNOW_CHANNEL);
+    log::info!("WiFi locked to channel {}", ESPNOW_CHANNEL);
 
     let esp_now = EspNow::take().unwrap();
+    lock_wifi_channel(ESPNOW_CHANNEL);
     esp_now
         .register_recv_cb(|info: &ReceiveInfo, data: &[u8]| {
             log::info!(
@@ -134,8 +145,25 @@ fn main() -> ! {
 
     log::info!("Gateway ready (USB serial bridge to PC)");
 
+    let mut last_usb_probe_ms = 0u64;
+
     loop {
         drain_to_usb(&mut usb_serial);
+
+        let now_ms = unsafe { (esp_idf_svc::sys::esp_timer_get_time() / 1_000) as u64 };
+        if now_ms.saturating_sub(last_usb_probe_ms) >= 2_000 {
+            last_usb_probe_ms = now_ms;
+            let probe = TelemetryFrame {
+                seq: 0,
+                timestamp_ms: now_ms,
+                node_id: 0,
+                payload: Payload::BoolCmd(false),
+            };
+            if let Ok(wire) = encode_frame(&probe) {
+                enqueue_uart_frame(&wire);
+            }
+        }
+
         FreeRtos::delay_ms(5);
     }
 }
