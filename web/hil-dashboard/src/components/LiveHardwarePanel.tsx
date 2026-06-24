@@ -30,11 +30,30 @@ function levelClass(level: string): string {
 }
 
 function liveSeries(events: LiveEvent[]) {
-  const ordered = [...events].reverse().slice(-80);
-  return {
-    cadence: ordered.map((event) => (event.level === "warn" ? 0.5 : 1)),
-    actions: ordered.map((event) => (event.level === "action" ? 1 : 0)),
-  };
+  const ordered = [...events].reverse().slice(-120);
+
+  const cadence = ordered.map((event, index) => {
+    const prev = ordered[index - 1];
+    const gapMs = prev ? Math.max(1, event.ts_ms - prev.ts_ms) : 1000;
+    const burst = 1200 / gapMs;
+    const levelBoost = event.level === "action" ? 0.35 : event.level === "warn" ? 0.15 : 0;
+    return Math.min(1.2, burst + levelBoost);
+  });
+
+  const actions = ordered.reduce<number[]>((series, event) => {
+    const previous = series[series.length - 1] ?? 0;
+    const decay = previous * 0.84;
+    const spike =
+      event.level === "action"
+        ? 1
+        : event.level === "warn"
+          ? Math.max(decay, 0.35)
+          : Math.max(decay, 0.05);
+    series.push(spike);
+    return series;
+  }, []);
+
+  return { cadence, actions };
 }
 
 export function LiveHardwarePanel({ copy }: { copy: Dictionary["live"] }) {
