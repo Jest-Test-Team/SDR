@@ -25,7 +25,7 @@ static PENDING: Mutex<RefCell<Deque<FrameBuf, MAX_PENDING>>> =
     Mutex::new(RefCell::new(Deque::new()));
 
 fn enqueue_uart_frame(data: &[u8]) {
-    let Ok(mut cell) = PENDING.lock() else {
+    let Ok(cell) = PENDING.lock() else {
         return;
     };
     let mut frame = FrameBuf::new();
