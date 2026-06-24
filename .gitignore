@@ -13,3 +13,4 @@ plan.md
 web/.DS_Store
 /data
 target/.rustc_info.json
+data/telemetry.db/db
