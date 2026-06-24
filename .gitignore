@@ -11,3 +11,5 @@ web/.DS_Store
 /target/xtensa-esp32-espidf/release
 plan.md
 web/.DS_Store
+/data
+target/.rustc_info.json
