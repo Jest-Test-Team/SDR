@@ -100,6 +100,11 @@ export type Dictionary = {
     eventsBuffered: string;
     lastAction: string;
     noActionYet: string;
+    chartsTitle: string;
+    eventRateTitle: string;
+    eventRateBody: string;
+    actionPulseTitle: string;
+    actionPulseBody: string;
     instructionsTitle: string;
     instructions: string[];
     logTitle: string;
@@ -321,6 +326,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       eventsBuffered: "Events buffered",
       lastAction: "Last ACTION_TRIGGERED",
       noActionYet: "—",
+      chartsTitle: "Live telemetry graphs",
+      eventRateTitle: "Recent event cadence",
+      eventRateBody:
+        "A rolling view of live messages arriving from the control-plane event buffer.",
+      actionPulseTitle: "Action trigger pulse",
+      actionPulseBody:
+        "Spikes show ACTION_TRIGGERED events from the TX node BOOT press.",
       instructionsTitle: "How to test",
       instructions: [
         "Terminal 1: ./scripts/run_local.sh (Gateway USB on usbmodem, not TX usbserial)",
@@ -538,6 +550,11 @@ export const dictionaries: Record<Locale, Dictionary> = {
       eventsBuffered: "緩衝事件數",
       lastAction: "最近 ACTION_TRIGGERED",
       noActionYet: "—",
+      chartsTitle: "即時遙測圖表",
+      eventRateTitle: "近期事件節奏",
+      eventRateBody: "從 control-plane 事件緩衝區接收到的即時訊息滾動視圖。",
+      actionPulseTitle: "Action 觸發脈衝",
+      actionPulseBody: "尖峰代表 TX 節點 BOOT 按鍵產生的 ACTION_TRIGGERED 事件。",
       instructionsTitle: "測試步驟",
       instructions: [
         "終端 1：./scripts/run_local.sh（Gateway 用 usbmodem，不是 TX 的 usbserial）",

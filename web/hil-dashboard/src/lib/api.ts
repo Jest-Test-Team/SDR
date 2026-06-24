@@ -49,13 +49,13 @@ export function wsUrl(): string {
 }
 
 export async function fetchLiveEvents(): Promise<LiveEvent[]> {
-  const res = await fetch(`${API_BASE}/api/v1/live/events`);
+  const res = await fetch(`${API_BASE}/api/v1/live/events`, { cache: "no-store" });
   if (!res.ok) throw new Error("live events fetch failed");
   return res.json();
 }
 
 export async function fetchLiveStatus(): Promise<LiveStatus> {
-  const res = await fetch(`${API_BASE}/api/v1/live/status`);
+  const res = await fetch(`${API_BASE}/api/v1/live/status`, { cache: "no-store" });
   if (!res.ok) throw new Error("live status fetch failed");
   return res.json();
 }

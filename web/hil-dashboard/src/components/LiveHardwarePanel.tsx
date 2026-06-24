@@ -10,6 +10,7 @@ import {
 } from "@/lib/api";
 import type { Dictionary } from "@/lib/i18n";
 import type { LiveEvent, LiveStatus } from "@/lib/types";
+import { WaveformPanel } from "./WaveformPanel";
 
 function formatTime(tsMs: number): string {
   const d = new Date(tsMs);
@@ -26,6 +27,14 @@ function levelClass(level: string): string {
   if (level === "action") return "log-action";
   if (level === "warn") return "log-warn";
   return "log-info";
+}
+
+function liveSeries(events: LiveEvent[]) {
+  const ordered = [...events].reverse().slice(-80);
+  return {
+    cadence: ordered.map((event) => (event.level === "warn" ? 0.5 : 1)),
+    actions: ordered.map((event) => (event.level === "action" ? 1 : 0)),
+  };
 }
 
 export function LiveHardwarePanel({ copy }: { copy: Dictionary["live"] }) {
@@ -120,6 +129,7 @@ export function LiveHardwarePanel({ copy }: { copy: Dictionary["live"] }) {
   }, [copy.backendError, pushEvent]);
 
   const connected = edgeOk && cpOk && streamOk;
+  const graphs = liveSeries(events);
 
   return (
     <>
@@ -165,6 +175,26 @@ export function LiveHardwarePanel({ copy }: { copy: Dictionary["live"] }) {
               : copy.noActionYet}
           </div>
         </div>
+      </div>
+
+      <h3 className="section-title">{copy.chartsTitle}</h3>
+      <div className="charts-grid">
+        <WaveformPanel
+          title={copy.eventRateTitle}
+          description={copy.eventRateBody}
+          data={graphs.cadence}
+          color="#4da3ff"
+          yDomain={[0, 1.2]}
+          unit="Evt"
+        />
+        <WaveformPanel
+          title={copy.actionPulseTitle}
+          description={copy.actionPulseBody}
+          data={graphs.actions}
+          color="#3ecf8e"
+          yDomain={[0, 1.2]}
+          unit="Act"
+        />
       </div>
 
       <div className="panel live-instructions">

@@ -317,7 +317,6 @@ export function HilDashboard() {
         </div>
       )}
 
-      {tab !== "live" && (
       <div className="control-panel panel">
         <h3>{t.sections.controls}</h3>
         <p className="panel-note">{t.controls.intro}</p>
@@ -431,7 +430,6 @@ export function HilDashboard() {
           {busy ? t.controls.sending : t.controls.send}
         </button>
       </div>
-      )}
     </div>
   );
 }
