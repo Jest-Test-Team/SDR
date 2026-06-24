@@ -3,4 +3,4 @@ pub mod sim;
 pub mod state;
 
 pub use sim::{PipelineSnapshot, SimConfig, TransmissionMode};
-pub use state::{AppState, SharedState};
+pub use state::{AppState, SecureIngestConfig, SharedState};

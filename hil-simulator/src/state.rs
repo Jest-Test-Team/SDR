@@ -6,6 +6,14 @@ use tokio::sync::{RwLock, broadcast};
 
 use crate::sim::{Kpis, PipelineSnapshot, SimConfig, TelemetryEvent};
 
+#[derive(Clone, Debug)]
+pub struct SecureIngestConfig {
+    pub url: String,
+    pub client_cert: String,
+    pub client_key: String,
+    pub server_ca: String,
+}
+
 pub struct AppState {
     pub config: RwLock<SimConfig>,
     pub kpis: RwLock<Kpis>,
@@ -14,12 +22,13 @@ pub struct AppState {
     pub seq: AtomicU32,
     pub tx: broadcast::Sender<PipelineSnapshot>,
     pub zmq_endpoint: String,
+    pub secure_ingest: Option<SecureIngestConfig>,
 }
 
 pub type SharedState = Arc<AppState>;
 
 impl AppState {
-    pub fn new(zmq_endpoint: String) -> SharedState {
+    pub fn new(zmq_endpoint: String, secure_ingest: Option<SecureIngestConfig>) -> SharedState {
         let (tx, _) = broadcast::channel(32);
         Arc::new(Self {
             config: RwLock::new(SimConfig::default()),
@@ -29,6 +38,7 @@ impl AppState {
             seq: AtomicU32::new(0),
             tx,
             zmq_endpoint,
+            secure_ingest,
         })
     }
 
@@ -53,7 +63,14 @@ impl AppState {
 
         if snap.packet_ok {
             if let Some(ref frame) = snap.frame {
-                if crate::sim::publish_zmq(&self.zmq_endpoint, frame).unwrap_or(false) {
+                let published = if let Some(config) = &self.secure_ingest {
+                    crate::sim::publish_secure_ingest(config, frame)
+                        .await
+                        .unwrap_or(false)
+                } else {
+                    crate::sim::publish_zmq(&self.zmq_endpoint, frame).unwrap_or(false)
+                };
+                if published {
                     snap.zmq_published = true;
                 }
             }

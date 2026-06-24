@@ -10,9 +10,10 @@ Hardware Track:
 
 Simulation Track:
   dsp-core/inject_zmq.py ------------------------------------ZMQ-------------> control-plane
+  hil-simulator sidecar ----ZMQ or HTTPS/TLS 1.3 mTLS ingest----------------> control-plane
 ```
 
-Both tracks publish the same COBS-wrapped `TelemetryFrame` on ZMQ.
+Hardware and simulator tracks publish the same `TelemetryFrame` values into the control-plane processing path.
 
 ## Current Status
 
@@ -27,6 +28,7 @@ Both tracks publish the same COBS-wrapped `TelemetryFrame` on ZMQ.
 - `scripts/run_live_dashboard.sh` clears stale `.next`, binds Next.js to `127.0.0.1`, and uses the next free dashboard port if `3001` is busy.
 - Firmware-real dashboard controls are ESP-NOW live telemetry, sequence numbers, BOOT action, heartbeat, runtime TX power, and runtime 8-bit BOOT payload.
 - Simulator-only or future-hardware controls are SNR, noise level, filter bandwidth, OOK threshold, and non-ESP-NOW modes.
+- `hil-simulator` is now a first-class software-sim sidecar: it can publish valid simulated frames through local ZMQ or through secure TLS 1.3/mTLS ingest at `control-plane`.
 
 ## Hardware
 
@@ -60,7 +62,20 @@ cd web/hil-dashboard && npm install && npm run dev
 - 後端：http://localhost:8090（REST + WebSocket `/ws/live`）
 - 前端：http://localhost:3000
 - 可調 SNR、雜訊、閾值、傳輸模式，即時顯示 OOK 波形與 BER/CRC 分析
-- 「發送布林指令」成功時可選發布至 ZMQ（`ZMQ_ENDPOINT`）供 control-plane 接收
+- 「發送布林指令」成功時會以軟體 sidecar 方式送出 `TelemetryFrame`，預設發布至 ZMQ（`ZMQ_ENDPOINT`）供 control-plane 接收
+- 安全 sidecar 模式可改走 `SECURE_INGEST_URL=https://localhost:<port>/api/v1/ingest/frame`，並設定 `HIL_SIM_TLS_CERT`、`HIL_SIM_TLS_KEY`、`HIL_SIM_SERVER_CA`
+
+Secure ingest on `control-plane`:
+
+```bash
+SECURE_INGEST_ONLY=1 \
+CONTROL_PLANE_TLS_CERT=certs/server.pem \
+CONTROL_PLANE_TLS_KEY=certs/server.key \
+CONTROL_PLANE_CLIENT_CA=certs/ca.pem \
+cargo run -p control-plane -- --health-port 8092
+```
+
+When `SECURE_INGEST_ONLY=1` is set, the ZMQ subscriber is disabled and clients must use TLS 1.3 with a trusted client certificate.
 
 ## Quick Start
 

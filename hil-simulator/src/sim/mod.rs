@@ -3,5 +3,5 @@ pub mod pipeline;
 
 pub use pipeline::{
     BitAnalysis, Kpis, PipelineSnapshot, SimConfig, TelemetryEvent, TransmissionMode, Waveforms,
-    publish_zmq, run_trigger,
+    publish_secure_ingest, publish_zmq, run_trigger,
 };

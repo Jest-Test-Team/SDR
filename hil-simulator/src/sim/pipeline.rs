@@ -2,6 +2,8 @@ use protocol::frame::{Payload, TelemetryFrame};
 use protocol::{decode_frame, encode_frame};
 use serde::{Deserialize, Serialize};
 
+use crate::state::SecureIngestConfig;
+
 use super::ook::{downsample, noise_sample};
 
 const SAMPLES_PER_BIT: usize = 36;
@@ -318,6 +320,36 @@ pub fn publish_zmq(endpoint: &str, frame: &TelemetryFrame) -> anyhow::Result<boo
     std::thread::sleep(std::time::Duration::from_millis(50));
     socket.send(&wire, 0)?;
     Ok(true)
+}
+
+pub async fn publish_secure_ingest(
+    config: &SecureIngestConfig,
+    frame: &TelemetryFrame,
+) -> anyhow::Result<bool> {
+    let server_ca = std::fs::read(&config.server_ca)?;
+    let client_cert = std::fs::read(&config.client_cert)?;
+    let client_key = std::fs::read(&config.client_key)?;
+    let mut identity_pem = client_cert;
+    identity_pem.extend_from_slice(b"\n");
+    identity_pem.extend_from_slice(&client_key);
+
+    let client = reqwest::Client::builder()
+        .use_rustls_tls()
+        .min_tls_version(reqwest::tls::Version::TLS_1_3)
+        .add_root_certificate(reqwest::Certificate::from_pem(&server_ca)?)
+        .identity(reqwest::Identity::from_pem(&identity_pem)?)
+        .build()?;
+
+    let response = client
+        .post(&config.url)
+        .json(&serde_json::json!({
+            "source": "software-sim",
+            "frame": frame,
+        }))
+        .send()
+        .await?;
+
+    Ok(response.error_for_status().is_ok())
 }
 
 #[cfg(test)]

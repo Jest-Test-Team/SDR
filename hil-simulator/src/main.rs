@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use axum::Router;
 use clap::Parser;
-use hil_simulator::{AppState, api};
+use hil_simulator::{AppState, SecureIngestConfig, api};
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
@@ -14,6 +14,14 @@ struct Args {
     port: u16,
     #[arg(long, env = "ZMQ_ENDPOINT", default_value = "tcp://127.0.0.1:5556")]
     zmq_endpoint: String,
+    #[arg(long, env = "SECURE_INGEST_URL")]
+    secure_ingest_url: Option<String>,
+    #[arg(long, env = "HIL_SIM_TLS_CERT")]
+    tls_cert: Option<String>,
+    #[arg(long, env = "HIL_SIM_TLS_KEY")]
+    tls_key: Option<String>,
+    #[arg(long, env = "HIL_SIM_SERVER_CA")]
+    server_ca: Option<String>,
 }
 
 #[tokio::main]
@@ -23,9 +31,14 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let args = Args::parse();
-    let state = AppState::new(args.zmq_endpoint.clone());
+    let secure_ingest = secure_ingest_config(&args)?;
+    let state = AppState::new(args.zmq_endpoint.clone(), secure_ingest.clone());
     info!("HIL simulator (software mode) starting");
-    info!("ZMQ publish target: {}", args.zmq_endpoint);
+    if let Some(config) = &secure_ingest {
+        info!("Secure ingest target: {}", config.url);
+    } else {
+        info!("ZMQ publish target: {}", args.zmq_endpoint);
+    }
 
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -39,4 +52,26 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+fn secure_ingest_config(args: &Args) -> anyhow::Result<Option<SecureIngestConfig>> {
+    match (
+        &args.secure_ingest_url,
+        &args.tls_cert,
+        &args.tls_key,
+        &args.server_ca,
+    ) {
+        (Some(url), Some(client_cert), Some(client_key), Some(server_ca)) => {
+            Ok(Some(SecureIngestConfig {
+                url: url.clone(),
+                client_cert: client_cert.clone(),
+                client_key: client_key.clone(),
+                server_ca: server_ca.clone(),
+            }))
+        }
+        (None, None, None, None) => Ok(None),
+        _ => anyhow::bail!(
+            "secure ingest requires SECURE_INGEST_URL, HIL_SIM_TLS_CERT, HIL_SIM_TLS_KEY, and HIL_SIM_SERVER_CA"
+        ),
+    }
 }
