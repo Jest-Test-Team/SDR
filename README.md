@@ -14,6 +14,20 @@ Simulation Track:
 
 Both tracks publish the same COBS-wrapped `TelemetryFrame` on ZMQ.
 
+## Current Status
+
+- Live hardware path has been verified end to end:
+  `ESP32 TX -> ESP-NOW -> ESP32-S3 Gateway -> USB -> edge-gateway -> ZMQ -> control-plane`.
+- Current macOS gateway port is `/dev/cu.usbmodem1101`; run the PC pipeline with
+  `GW_PORT=/dev/cu.usbmodem1101 GW_BAUD=115200 ./scripts/run_local.sh`.
+- `edge-gateway` listens on `:8081`, `control-plane` listens on `:8092`, and the live dashboard proxies those through Next.js.
+- TX node heartbeats are decoded as `BoolCmd(false)` about every 2 seconds; BOOT press should produce `ACTION_TRIGGERED`.
+- If `control-plane` fails with sled corruption, preserve the local DB with:
+  `mv data/telemetry.db data/telemetry.db.corrupt-$(date +%Y%m%d-%H%M)` and restart the pipeline.
+- `scripts/run_live_dashboard.sh` clears stale `.next`, binds Next.js to `127.0.0.1`, and uses the next free dashboard port if `3001` is busy.
+- Firmware-real dashboard controls are ESP-NOW live telemetry, sequence numbers, BOOT action, heartbeat, runtime TX power, and runtime 8-bit BOOT payload.
+- Simulator-only or future-hardware controls are SNR, noise level, filter bandwidth, OOK threshold, and non-ESP-NOW modes.
+
 ## Hardware
 
 | Role | Device | Qty | Interface |
@@ -159,8 +173,8 @@ cargo test -p control-plane --test sim_pipeline
 cargo test -p hil-simulator --lib
 
 # Firmware (requires esp toolchain + source ~/export-esp.sh)
-./scripts/flash_gw.sh /dev/cu.usbserial-110 115200
-./scripts/flash_tx.sh /dev/cu.usbserial-TX1 115200
+./scripts/flash_gw.sh /dev/cu.usbmodem1101 115200
+./scripts/flash_tx.sh /dev/cu.usbserial-<visible-tx-port> 115200
 ```
 
 First firmware build downloads ESP-IDF into `.embuild/` (~10–20 min).
