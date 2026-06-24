@@ -14,3 +14,4 @@ web/.DS_Store
 /data
 target/.rustc_info.json
 data/telemetry.db/db
+/target/xtensa-esp32-espidf/debug

@@ -14,7 +14,10 @@ use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
 use protocol::frame::{Payload, TelemetryFrame};
 use protocol::encode_espnow;
 
-use crate::espnow_setup::{add_gateway_peer, disable_wifi_power_save, lock_wifi_channel, ESPNOW_CHANNEL};
+use crate::espnow_setup::{
+    add_gateway_peer, disable_wifi_power_save, lock_wifi_channel, set_max_tx_power_dbm,
+    ESPNOW_CHANNEL,
+};
 use crate::mac::parse_mac;
 
 const GATEWAY_MAC: &str = env!("GATEWAY_MAC");
@@ -24,6 +27,7 @@ const NODE_ID: u8 = {
 };
 const DEBOUNCE_MS: u32 = 50;
 const HEARTBEAT_MS: u64 = 2_000;
+const TX_POWER_DBM: Option<&str> = option_env!("TX_POWER_DBM");
 
 static SEQ: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 
@@ -69,6 +73,17 @@ fn send_bool(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], value: bool) {
     }
 }
 
+fn apply_configured_tx_power() {
+    let Some(raw) = TX_POWER_DBM else {
+        log::info!("TX_POWER_DBM not set; using ESP-IDF default Wi-Fi TX power");
+        return;
+    };
+    match raw.parse::<i8>() {
+        Ok(dbm) => set_max_tx_power_dbm(dbm),
+        Err(_) => log::warn!("invalid TX_POWER_DBM='{}'; using ESP-IDF default", raw),
+    }
+}
+
 #[unsafe(no_mangle)]
 fn main() -> ! {
     EspLogger::initialize_default();
@@ -88,6 +103,7 @@ fn main() -> ! {
     wifi.start().unwrap();
     lock_wifi_channel(ESPNOW_CHANNEL);
     disable_wifi_power_save();
+    apply_configured_tx_power();
 
     let esp_now = EspNow::take().unwrap();
     lock_wifi_channel(ESPNOW_CHANNEL);

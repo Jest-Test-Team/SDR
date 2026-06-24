@@ -19,9 +19,12 @@ cd "${ROOT}"
 
 export GATEWAY_MAC="${GATEWAY_MAC:-FF:FF:FF:FF:FF:FF}"
 export NODE_ID="${NODE_ID:-1}"
+if [[ -n "${TX_POWER_DBM:-}" ]]; then
+    export TX_POWER_DBM
+fi
 
 echo "Building esp32-tx-node..."
-echo "  GATEWAY_MAC=${GATEWAY_MAC}  NODE_ID=${NODE_ID}"
+echo "  GATEWAY_MAC=${GATEWAY_MAC}  NODE_ID=${NODE_ID}  TX_POWER_DBM=${TX_POWER_DBM:-default}"
 cargo +esp build --release -p esp32-tx-node \
   --config 'build.target="xtensa-esp32-espidf"' \
   --config 'unstable.build-std=["std","panic_abort"]' \

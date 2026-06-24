@@ -18,13 +18,16 @@ Both tracks publish the same COBS-wrapped `TelemetryFrame` on ZMQ.
 
 | Role | Device | Qty | Interface |
 |------|--------|-----|-----------|
-| TX Node | ESP32 (WROOM-32) | 2 | ESP-NOW + GPIO0 button + UART CLI |
+| TX Node | ESP32 (WROOM-32) | 2 | ESP-NOW + GPIO0 button |
 | Gateway | ESP32-S3 (WROOM-1U) | 1 | ESP-NOW + **USB serial** to PC (COBS telemetry on `/dev/cu.usbmodem*`) |
 
 Compile-time env (firmware):
 
 - `GATEWAY_MAC` — gateway peer MAC (default `FF:FF:FF:FF:FF:FF`)
 - `NODE_ID` — TX node id (default `1`)
+- `TX_POWER_DBM` — optional ESP32 Wi-Fi TX power for the TX node, clamped by firmware to the supported hardware range
+
+See `firmware/HARDWARE_CAPABILITIES.md` for which dashboard controls are real firmware controls versus simulator/SDR-path controls.
 
 ## HIL 模擬器儀表板（ESP32 軟體模擬）
 
@@ -82,7 +85,7 @@ GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=1 \
   ./scripts/flash_tx.sh /dev/cu.usbserial-TX1 115200 --monitor
 
 # TX #2 (unplug gateway, plug second ESP32, use its port)
-GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=2 \
+GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=2 TX_POWER_DBM=10 \
   ./scripts/flash_tx.sh /dev/cu.usbserial-TX2 115200 --monitor
 ```
 
@@ -90,7 +93,7 @@ Notes:
 
 - Replace port names with your actual `/dev/cu.usbserial-*` (do **not** use placeholder `XXXX`).
 - If flash fails at high baud, use `115200` for `espflash`; on macOS, `run_local.sh` uses `115200` for `/dev/cu.usbmodem*` automatically.
-- UART CLI on TX node: `TRIGGER` / `RELEASE` (115200 default on ESP32 UART0).
+- The TX node sends `BoolCmd(true)` on BOOT press and `BoolCmd(false)` heartbeats about every 2 seconds.
 
 ### 2. Run Pipeline (PC)
 
@@ -109,7 +112,7 @@ Expect `ACTION_TRIGGERED` in control-plane logs for unique `BoolCmd(true)` frame
 
 ### 4. Verify
 
-- Press GPIO0 or send `TRIGGER` on TX UART
+- Press GPIO0/BOOT on the TX node.
 - Health: `http://localhost:8080/health` (control-plane), `http://localhost:8081/health` (edge-gateway)
 - Metrics: `/metrics` on the same ports
 
