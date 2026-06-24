@@ -108,6 +108,7 @@ export function HilDashboard() {
         if (msg.type === "hello") {
           setConfig(msg.config);
           setKpis(msg.kpis);
+          setSidecarTransport(msg.sidecar_transport ?? "zmq");
           setEvents(msg.events ?? []);
         }
       } catch (e) {

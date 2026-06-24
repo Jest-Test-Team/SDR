@@ -81,6 +81,13 @@ export type Dictionary = {
     filter: Explanation;
     threshold: Explanation;
     replayGuard: Explanation;
+    sidecar: {
+      title: string;
+      body: string;
+      options: Record<"zmq" | "tls13_mtls", string>;
+      lastPublished: string;
+      lastLocalOnly: string;
+    };
     sending: string;
     send: string;
     applyingFirmware: string;
@@ -170,10 +177,10 @@ export const dictionaries: Record<Locale, Dictionary> = {
         },
         {
           icon: "ZMQ",
-          label: "ZMQ pipe",
-          sub: "Recovered result",
+          label: "Sidecar transport",
+          sub: "ZMQ or mTLS ingest",
           explanation:
-            "Carries decoded telemetry from the signal processing side to the control side.",
+            "Carries decoded telemetry from the simulator to the control plane through local ZMQ or TLS 1.3 mTLS ingest.",
         },
         {
           icon: "CP",
@@ -283,6 +290,16 @@ export const dictionaries: Record<Locale, Dictionary> = {
       replayGuard: {
         title: "Sequence replay check",
         body: "Rejects packets that repeat an old sequence number. This models a basic replay-protection rule.",
+      },
+      sidecar: {
+        title: "Software-sim sidecar",
+        body: "Transport is selected when hil-simulator starts. The browser configures the channel model; the sidecar forwards valid frames to control-plane.",
+        options: {
+          zmq: "Local ZMQ",
+          tls13_mtls: "TLS 1.3 mTLS ingest",
+        },
+        lastPublished: "Last trigger was forwarded to control-plane.",
+        lastLocalOnly: "Last trigger stayed local because the simulated packet was not valid or forwarding failed.",
       },
       sending: "Sending...",
       send: "Send boolean command",
@@ -402,9 +419,9 @@ export const dictionaries: Record<Locale, Dictionary> = {
         },
         {
           icon: "ZMQ",
-          label: "ZMQ 管道",
-          sub: "還原結果",
-          explanation: "把解碼後的遙測資料，從訊號處理端送到控制端。",
+          label: "Sidecar 傳輸",
+          sub: "ZMQ 或 mTLS ingest",
+          explanation: "把模擬器解碼後的遙測資料，透過本機 ZMQ 或 TLS 1.3 mTLS ingest 送到 control-plane。",
         },
         {
           icon: "CP",
@@ -513,6 +530,16 @@ export const dictionaries: Record<Locale, Dictionary> = {
       replayGuard: {
         title: "序列號重放校驗",
         body: "拒絕重複舊序列號的封包。這是在模擬基本的重放攻擊防護規則。",
+      },
+      sidecar: {
+        title: "Software-sim sidecar",
+        body: "傳輸方式由 hil-simulator 啟動參數決定。瀏覽器調整通道模型，sidecar 會把有效封包轉送到 control-plane。",
+        options: {
+          zmq: "本機 ZMQ",
+          tls13_mtls: "TLS 1.3 mTLS ingest",
+        },
+        lastPublished: "上一筆觸發已轉送到 control-plane。",
+        lastLocalOnly: "上一筆觸發留在本機，原因是模擬封包無效或轉送失敗。",
       },
       sending: "發送中...",
       send: "發送布林指令",
