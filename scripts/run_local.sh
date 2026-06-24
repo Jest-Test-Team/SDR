@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# macOS: Gateway often appears as /dev/cu.usbmodem* (S3 native USB) or /dev/cu.usbserial*
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=flash_helpers.sh
+source "${ROOT}/scripts/flash_helpers.sh"
+
+# Gateway (ESP32-S3) = /dev/cu.usbmodem* — NOT the TX usbserial port
 if [[ "$(uname -s)" == "Darwin" && "${GW_PORT:-}" == "" ]]; then
-  GW_PORT="$(ls /dev/cu.usbmodem* /dev/cu.usbserial* 2>/dev/null | head -1 || true)"
+  GW_PORT="$(detect_gateway_port || true)"
 fi
 GW_PORT="${GW_PORT:-/dev/ttyUSB1}"
 GW_BAUD="${GW_BAUD:-921600}"
@@ -23,23 +27,17 @@ if pgrep -f 'target/release/edge-gateway' >/dev/null 2>&1 \
   exit 1
 fi
 
-if [[ ! -e "${GW_PORT}" ]]; then
-  echo "ERROR: serial port ${GW_PORT} not found." >&2
-  echo "Plug in the Gateway USB cable, then run:" >&2
-  echo "  ls /dev/cu.* | grep -vE 'Bluetooth|debug'" >&2
-  echo "  GW_PORT=/dev/cu.usbmodem101 ./scripts/run_local.sh" >&2
-  exit 1
-fi
+preflight_pipeline_port "${GW_PORT}" || exit 1
 
 export RUST_LOG="${RUST_LOG:-info}"
 export GW_PORT GW_BAUD ZMQ_ENDPOINT HEALTH_PORT="$EDGE_HEALTH_PORT"
 
 echo "Starting Edge Gateway (UART -> ZMQ)..."
-echo "  UART: $GW_PORT @ $GW_BAUD"
+echo "  UART: $GW_PORT @ $GW_BAUD  (Gateway ESP32-S3)"
 echo "  ZMQ:  $ZMQ_ENDPOINT"
 echo "  Health: :$EDGE_HEALTH_PORT"
 if [[ "${GW_PORT}" == *usbmodem* ]]; then
-  echo "  (waiting 3s for USB serial to settle after flash/boot...)"
+  echo "  (waiting 3s for USB serial to settle...)"
   sleep 3
 fi
 
@@ -62,5 +60,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+echo ""
 echo "Both services running. Press Ctrl+C to stop."
+echo "TX node: short-press BOOT (GPIO0) while near Gateway — expect ACTION_TRIGGERED in logs."
 wait

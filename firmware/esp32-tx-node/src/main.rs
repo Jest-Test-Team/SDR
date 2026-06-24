@@ -1,8 +1,11 @@
 #![no_main]
 
+mod espnow_setup;
+mod mac;
+
 use core::sync::atomic::{AtomicBool, Ordering};
 
-use esp_idf_svc::espnow::{EspNow, PeerInfo};
+use esp_idf_svc::espnow::{EspNow, BROADCAST};
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
 use esp_idf_svc::hal::gpio::{PinDriver, Pull};
@@ -16,21 +19,16 @@ use heapless::String;
 use protocol::frame::{Payload, TelemetryFrame};
 use protocol::encode_espnow;
 
+use crate::espnow_setup::{add_gateway_peer, disable_wifi_power_save, ESPNOW_CHANNEL};
+use crate::mac::parse_mac;
+
 const GATEWAY_MAC: &str = env!("GATEWAY_MAC");
 const NODE_ID: u8 = {
     const ID_STR: &str = env!("NODE_ID");
     parse_node_id(ID_STR)
 };
 const DEBOUNCE_MS: u32 = 50;
-const ESPNOW_CHANNEL: u8 = 1;
-
-fn set_wifi_channel(channel: u8) {
-    use esp_idf_svc::sys::{esp_wifi_set_channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE};
-    esp_idf_svc::esp!(unsafe {
-        esp_wifi_set_channel(channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE)
-    })
-    .expect("esp_wifi_set_channel");
-}
+const HEARTBEAT_MS: u64 = 5_000;
 
 static SEQ: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 static UART_TRIGGER: AtomicBool = AtomicBool::new(false);
@@ -54,42 +52,6 @@ const fn parse_node_id(s: &str) -> u8 {
     value
 }
 
-fn parse_mac(s: &str) -> [u8; 6] {
-    let mut mac = [0xFFu8; 6];
-    let mut idx = 0usize;
-    let mut part = 0u8;
-    let mut nibble = 0u8;
-    let mut has_nibble = false;
-
-    for byte in s.bytes() {
-        let v = match byte {
-            b'0'..=b'9' => byte - b'0',
-            b'a'..=b'f' => byte - b'a' + 10,
-            b'A'..=b'F' => byte - b'A' + 10,
-            b':' | b'-' if has_nibble => {
-                part = (part << 4) | nibble;
-                has_nibble = false;
-                if idx < 6 {
-                    mac[idx] = part;
-                    idx += 1;
-                    part = 0;
-                }
-                continue;
-            }
-            _ => continue,
-        };
-        nibble = v;
-        has_nibble = true;
-    }
-
-    if has_nibble && idx < 6 {
-        part = (part << 4) | nibble;
-        mac[idx] = part;
-    }
-
-    mac
-}
-
 fn now_ms() -> u64 {
     unsafe { (sys::esp_timer_get_time() / 1_000) as u64 }
 }
@@ -108,9 +70,22 @@ fn send_bool(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], value: bool) {
         return;
     };
 
-    match esp_now.send(gateway_mac, &packet) {
-        Ok(()) => log::info!("ESP-NOW sent node={} seq={} value={}", NODE_ID, seq, value),
-        Err(e) => log::error!("ESP-NOW send failed: {:?}", e),
+    for dest in [gateway_mac, BROADCAST] {
+        match esp_now.send(dest, &packet) {
+            Ok(()) => log::info!(
+                "ESP-NOW sent node={} seq={} value={} dst={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+                NODE_ID,
+                seq,
+                value,
+                dest[0],
+                dest[1],
+                dest[2],
+                dest[3],
+                dest[4],
+                dest[5]
+            ),
+            Err(e) => log::error!("ESP-NOW send failed: {:?}", e),
+        }
     }
 }
 
@@ -143,23 +118,17 @@ fn main() -> ! {
     let mut wifi = EspWifi::new(peripherals.modem, sys_loop, Some(nvs)).unwrap();
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
         ssid: "".try_into().unwrap(),
+        channel: Some(ESPNOW_CHANNEL),
         ..Default::default()
     }))
     .unwrap();
     wifi.start().unwrap();
-    set_wifi_channel(ESPNOW_CHANNEL);
+    disable_wifi_power_save();
 
     let esp_now = EspNow::take().unwrap();
     let gateway_mac = parse_mac(GATEWAY_MAC);
-
-    let mut peer = PeerInfo::default();
-    peer.peer_addr = gateway_mac;
-    peer.channel = ESPNOW_CHANNEL;
-    peer.encrypt = false;
-    if esp_now.peer_exists(gateway_mac).unwrap_or(false) {
-        let _ = esp_now.del_peer(gateway_mac);
-    }
-    esp_now.add_peer(peer).unwrap();
+    log::info!("GATEWAY_MAC={} ch={}", GATEWAY_MAC, ESPNOW_CHANNEL);
+    add_gateway_peer(&esp_now, gateway_mac);
     log::info!(
         "ESP-NOW ready, gateway={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
         gateway_mac[0],
@@ -183,7 +152,9 @@ fn main() -> ! {
 
     let mut line = String::<64>::new();
     let mut last_button_ms = 0u64;
-    let mut last_level = true;
+    let mut button_down = false;
+    let mut trigger_sent = false;
+    let mut last_heartbeat_ms = now_ms();
 
     loop {
         poll_uart(&mut uart, &mut line);
@@ -197,15 +168,27 @@ fn main() -> ! {
         }
 
         let pressed = button.is_low();
-        if pressed && !last_level {
-            let now = now_ms();
-            if now.saturating_sub(last_button_ms) >= DEBOUNCE_MS as u64 {
-                last_button_ms = now;
+        if pressed {
+            if !button_down {
+                button_down = true;
+                last_button_ms = now_ms();
+            } else if !trigger_sent && now_ms().saturating_sub(last_button_ms) >= DEBOUNCE_MS as u64 {
+                trigger_sent = true;
                 log::info!("BOOT pressed, sending ESP-NOW");
                 send_bool(&esp_now, gateway_mac, true);
             }
+        } else {
+            button_down = false;
+            trigger_sent = false;
         }
-        last_level = pressed;
+
+        let now = now_ms();
+        if now.saturating_sub(last_heartbeat_ms) >= HEARTBEAT_MS {
+            last_heartbeat_ms = now;
+            log::info!("heartbeat");
+            send_bool(&esp_now, gateway_mac, false);
+        }
+
         FreeRtos::delay_ms(10);
     }
 }

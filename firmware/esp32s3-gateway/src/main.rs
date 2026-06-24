@@ -18,13 +18,7 @@ const MAX_PENDING: usize = 8;
 const MAX_FRAME: usize = 256;
 const ESPNOW_CHANNEL: u8 = 1;
 
-fn set_wifi_channel(channel: u8) {
-    use esp_idf_svc::sys::{esp_wifi_set_channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE};
-    esp_idf_svc::esp!(unsafe {
-        esp_wifi_set_channel(channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE)
-    })
-    .expect("esp_wifi_set_channel");
-}
+static USB_TX_COUNT: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 
 type FrameBuf = heapless::Vec<u8, MAX_FRAME>;
 
@@ -60,6 +54,10 @@ fn drain_to_usb(serial: &mut UsbSerialDriver<'_>) {
         };
         if let Err(e) = serial.write_all(&uart_frame) {
             log::error!("USB serial write failed: {:?}", e);
+        } else {
+            let n = USB_TX_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed) + 1;
+            log::info!("USB TX frame #{} ({} bytes)", n, uart_frame.len());
+            let _ = serial.flush();
         }
     }
 }
@@ -76,15 +74,26 @@ fn main() -> ! {
     let mut wifi = EspWifi::new(peripherals.modem, sys_loop, Some(nvs)).unwrap();
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
         ssid: "".try_into().unwrap(),
+        channel: Some(ESPNOW_CHANNEL),
         ..Default::default()
     }))
     .unwrap();
     wifi.start().unwrap();
-    set_wifi_channel(ESPNOW_CHANNEL);
+    log::info!("WiFi started on channel {}", ESPNOW_CHANNEL);
 
     let esp_now = EspNow::take().unwrap();
     esp_now
         .register_recv_cb(|info: &ReceiveInfo, data: &[u8]| {
+            log::info!(
+                "ESP-NOW raw {} bytes from {:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+                data.len(),
+                info.src_addr[0],
+                info.src_addr[1],
+                info.src_addr[2],
+                info.src_addr[3],
+                info.src_addr[4],
+                info.src_addr[5]
+            );
             if data.first() != Some(&ESP_NOW_VENDOR_ID) {
                 return;
             }

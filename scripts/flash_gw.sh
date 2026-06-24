@@ -2,8 +2,15 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=flash_helpers.sh
+source "${ROOT}/scripts/flash_helpers.sh"
+
 PORT="${1:-/dev/ttyUSB1}"
 BAUD="${2:-921600}"
+
+preflight_flash_port "${PORT}" "Gateway" || exit 1
+release_pipeline_for_flash
+preflight_flash_port "${PORT}" "Gateway" || exit 1
 
 export PATH="${HOME}/.cargo/bin:${PATH}"
 # shellcheck source=/dev/null
@@ -28,6 +35,7 @@ cargo +esp build --release -p esp32s3-gateway \
   --config "env.ESP_IDF_SDKCONFIG_DEFAULTS=\"${SDKDEF}\""
 
 BIN="${ROOT}/target/xtensa-esp32s3-espidf/release/esp32s3-gateway"
+preflight_flash_port "${PORT}" "Gateway" || exit 1
 echo "Flashing to ${PORT} at ${BAUD} baud..."
 if [[ "${3:-}" == "--monitor" ]]; then
     espflash flash --port "${PORT}" --baud "${BAUD}" --monitor --monitor-baud 921600 "${BIN}"

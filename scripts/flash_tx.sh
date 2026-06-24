@@ -2,8 +2,13 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# shellcheck source=flash_helpers.sh
+source "${ROOT}/scripts/flash_helpers.sh"
+
 PORT="${1:-/dev/ttyUSB0}"
 BAUD="${2:-460800}"
+
+preflight_flash_port "${PORT}" "TX node" || exit 1
 
 export PATH="${HOME}/.cargo/bin:${PATH}"
 # shellcheck source=/dev/null
@@ -27,6 +32,7 @@ cargo +esp build --release -p esp32-tx-node \
   --config 'env.ESP_IDF_SYS_ROOT_CRATE="esp32-tx-node"'
 
 BIN="${ROOT}/target/xtensa-esp32-espidf/release/esp32-tx-node"
+preflight_flash_port "${PORT}" "TX node" || exit 1
 if [[ "${3:-}" == "--monitor" ]]; then
     espflash flash --port "${PORT}" --baud "${BAUD}" --monitor "${BIN}"
 else
