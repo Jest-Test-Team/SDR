@@ -4,8 +4,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use protocol::ReplayGuard;
 use tokio::sync::{RwLock, broadcast};
 
+use crate::gwbackend::{GatewayBackend, GatewayStatus};
 use crate::sim::{
-    GatewayCommand, GatewayResponse, GatewaySim, Kpis, PipelineSnapshot, SimConfig, TelemetryEvent,
+    GatewayCommand, GatewayResponse, Kpis, PipelineSnapshot, SimConfig, TelemetryEvent,
 };
 
 #[derive(Clone, Debug)]
@@ -25,13 +26,21 @@ pub struct AppState {
     pub tx: broadcast::Sender<PipelineSnapshot>,
     pub zmq_endpoint: String,
     pub secure_ingest: Option<SecureIngestConfig>,
-    pub gateway: RwLock<GatewaySim>,
+    pub gateway: GatewayBackend,
 }
 
 pub type SharedState = Arc<AppState>;
 
 impl AppState {
     pub fn new(zmq_endpoint: String, secure_ingest: Option<SecureIngestConfig>) -> SharedState {
+        Self::with_gateway(zmq_endpoint, secure_ingest, GatewayBackend::simulation())
+    }
+
+    pub fn with_gateway(
+        zmq_endpoint: String,
+        secure_ingest: Option<SecureIngestConfig>,
+        gateway: GatewayBackend,
+    ) -> SharedState {
         let (tx, _) = broadcast::channel(32);
         Arc::new(Self {
             config: RwLock::new(SimConfig::default()),
@@ -42,16 +51,20 @@ impl AppState {
             tx,
             zmq_endpoint,
             secure_ingest,
-            gateway: RwLock::new(GatewaySim::new()),
+            gateway,
         })
     }
 
     pub async fn gateway_snapshot(&self) -> crate::sim::GatewaySnapshot {
-        self.gateway.read().await.snapshot()
+        self.gateway.snapshot().await
     }
 
     pub async fn apply_gateway_command(&self, command: &GatewayCommand) -> GatewayResponse {
-        self.gateway.write().await.apply(command)
+        self.gateway.apply(command).await
+    }
+
+    pub fn gateway_status(&self) -> GatewayStatus {
+        self.gateway.status()
     }
 
     pub fn sidecar_transport(&self) -> &'static str {

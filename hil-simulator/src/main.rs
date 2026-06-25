@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 
 use axum::Router;
 use clap::Parser;
+use hil_simulator::gwbackend::GatewayBackend;
 use hil_simulator::{AppState, SecureIngestConfig, api};
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
@@ -22,6 +23,42 @@ struct Args {
     tls_key: Option<String>,
     #[arg(long, env = "HIL_SIM_SERVER_CA")]
     server_ca: Option<String>,
+    /// Serial port to the ESP32-S3 software-sim node. Use "auto" to pick the
+    /// first /dev/cu.usbmodem* (macOS) / /dev/ttyACM* (Linux). Omitted = sim only.
+    #[arg(long, env = "HIL_GW_SERIAL")]
+    gw_serial: Option<String>,
+    #[arg(long, env = "HIL_GW_BAUD", default_value = "115200")]
+    gw_baud: u32,
+}
+
+fn resolve_gateway_backend(args: &Args) -> GatewayBackend {
+    let Some(spec) = &args.gw_serial else {
+        return GatewayBackend::simulation();
+    };
+    let port = if spec == "auto" {
+        match detect_gateway_port() {
+            Some(p) => p,
+            None => {
+                info!("no S3 serial port found for auto-detect; gateway in simulation mode");
+                return GatewayBackend::simulation();
+            }
+        }
+    } else {
+        spec.clone()
+    };
+    GatewayBackend::connect(&port, args.gw_baud)
+}
+
+fn detect_gateway_port() -> Option<String> {
+    let patterns = ["/dev/cu.usbmodem", "/dev/ttyACM"];
+    let dir = std::fs::read_dir("/dev").ok()?;
+    let mut found: Vec<String> = dir
+        .filter_map(|e| e.ok())
+        .map(|e| e.path().to_string_lossy().into_owned())
+        .filter(|p| patterns.iter().any(|pat| p.starts_with(pat)))
+        .collect();
+    found.sort();
+    found.into_iter().next()
 }
 
 #[tokio::main]
@@ -32,7 +69,10 @@ async fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
     let secure_ingest = secure_ingest_config(&args)?;
-    let state = AppState::new(args.zmq_endpoint.clone(), secure_ingest.clone());
+    let gateway = resolve_gateway_backend(&args);
+    info!("Gateway backend: {:?}", gateway.status().mode);
+    let state =
+        AppState::with_gateway(args.zmq_endpoint.clone(), secure_ingest.clone(), gateway);
     info!("HIL simulator (software mode) starting");
     if let Some(config) = &secure_ingest {
         info!("Secure ingest target: {}", config.url);

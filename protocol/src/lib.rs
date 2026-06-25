@@ -8,6 +8,7 @@ pub use cobs;
 pub use postcard;
 
 pub mod frame;
+pub mod gwlink;
 pub mod replay;
 
 pub use replay::ReplayGuard;
@@ -66,7 +67,7 @@ fn decode_payload(data: &[u8]) -> Result<frame::TelemetryFrame, frame::DecodeErr
     postcard::from_bytes(payload).map_err(|_| frame::DecodeError::Postcard)
 }
 
-fn crc16_xmodem(data: &[u8]) -> u16 {
+pub(crate) fn crc16_xmodem(data: &[u8]) -> u16 {
     let mut crc = 0u16;
     for &byte in data {
         crc ^= u16::from(byte) << 8;

@@ -19,6 +19,11 @@ Hardware and simulator tracks publish the same `TelemetryFrame` values into the 
 
 - Live hardware path has been verified end to end:
   `ESP32 TX -> ESP-NOW -> ESP32-S3 Gateway -> USB -> edge-gateway -> ZMQ -> control-plane`.
+- Both boards re-verified flashing on 2026-06-25:
+  - Gateway (ESP32-S3, MAC `14:C1:9F:CB:51:B4`) on `/dev/cu.usbmodem1101` flashed at `921600` baud via `./scripts/flash_gw.sh`.
+  - TX node (ESP32, MAC `CC:7B:5C:25:9E:20`, `NODE_ID=1`, `TX_POWER_DBM=10`) on `/dev/cu.usbserial-57860443631` flashed at `460800` baud via `./scripts/flash_tx.sh`.
+  - After flashing, the TX serial monitor shows `ESP-NOW sent node=1 seq=N payload=BoolCmd(false)` heartbeats ~every 2s; BOOT/GPIO0 press sends `BoolCmd(true)`.
+  - `espflash`'s `Setting baud rate higher than 115,200 can cause issues` is a benign warning; these boards flash reliably at the higher rates above. Drop to `115200` only if a flash fails.
 - Current macOS gateway port is `/dev/cu.usbmodem1101`; run the PC pipeline with
   `GW_PORT=/dev/cu.usbmodem1101 GW_BAUD=115200 ./scripts/run_local.sh`.
 - `edge-gateway` listens on `:8081`, `control-plane` listens on `:8092`, and the live dashboard proxies those through Next.js.
@@ -100,22 +105,38 @@ List serial ports (macOS use `/dev/cu.*`, not `ttyUSB*`):
 ls /dev/cu.* | grep -v Bluetooth
 ```
 
-**ESP32-S3 Gateway** (already flashed example MAC `14:C1:9F:CB:51:B4`):
+**ESP32-S3 Gateway** (already flashed example MAC `14:C1:9F:CB:51:B4`). With no
+arguments the script auto-detects the first `/dev/cu.usbmodem*` and flashes at
+`921600` baud:
 
 ```bash
-./scripts/flash_gw.sh /dev/cu.usbmodem1101 115200 --monitor
+./scripts/flash_gw.sh                       # flash only (verified working)
+./scripts/flash_gw.sh "" 921600 --monitor   # flash + open serial monitor
 ```
 
-**ESP32 TX Node** (×2, set unique `NODE_ID`; point `GATEWAY_MAC` at gateway):
+> Running without `--monitor` may print `Monitor options were provided, but
+> --monitor flag isn't set` — harmless. Pass `--monitor` to actually watch the
+> gateway bridge decoded ESP-NOW frames out over USB.
+
+**ESP32 TX Node** (×2, set unique `NODE_ID`; point `GATEWAY_MAC` at gateway).
+Empty first arg auto-detects the first `/dev/cu.usbserial*`:
 
 ```bash
-# TX #1
-GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=1 \
-  ./scripts/flash_tx.sh /dev/cu.usbserial-57860443631 115200 --monitor
+# TX #1 (verified working)
+GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=1 TX_POWER_DBM=10 \
+  ./scripts/flash_tx.sh "" 460800 --monitor
 
 # TX #2 (unplug gateway, plug second ESP32, use its port)
 GATEWAY_MAC="14:C1:9F:CB:51:B4" NODE_ID=2 TX_POWER_DBM=10 \
-  ./scripts/flash_tx.sh /dev/cu.usbserial-57860443631 115200 --monitor
+  ./scripts/flash_tx.sh "" 460800 --monitor
+```
+
+Expected TX monitor output after a successful flash:
+
+```text
+I (817) esp32_tx_node: ESP-NOW ready, gateway=14:C1:9F:CB:51:B4 ch=1
+I (837) esp32_tx_node: main loop started (BOOT=GPIO0 trigger)
+I (2847) esp32_tx_node: ESP-NOW sent node=1 seq=1 payload=BoolCmd(false)
 ```
 
 Notes:

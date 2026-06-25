@@ -34,7 +34,9 @@ pub fn router(state: SharedState) -> Router {
         .route("/api/v1/trigger", post(trigger))
         .route("/api/v1/events", get(get_events))
         .route("/api/v1/gateway", get(get_gateway))
+        .route("/api/v1/gateway/status", get(get_gateway_status))
         .route("/api/v1/gateway/command", post(gateway_command))
+        .route("/ws/gateway", get(ws_gateway))
         .route("/ws/live", get(ws_handler))
         .with_state(state)
 }
@@ -89,6 +91,44 @@ async fn gateway_command(
 ) -> Json<serde_json::Value> {
     let response = state.apply_gateway_command(&command).await;
     Json(serde_json::json!({ "ok": response.ok, "response": response }))
+}
+
+async fn get_gateway_status(
+    State(state): State<SharedState>,
+) -> Json<crate::gwbackend::GatewayStatus> {
+    Json(state.gateway_status())
+}
+
+async fn ws_gateway(ws: WebSocketUpgrade, State(state): State<SharedState>) -> impl IntoResponse {
+    ws.on_upgrade(move |socket| handle_gateway_socket(socket, state))
+}
+
+async fn handle_gateway_socket(socket: WebSocket, state: SharedState) {
+    let (mut sender, mut receiver) = socket.split();
+    let mut rx = state.gateway.subscribe();
+
+    let init = serde_json::json!({
+        "type": "hello",
+        "status": state.gateway_status(),
+        "snapshot": state.gateway_snapshot().await,
+    });
+    if sender.send(Message::Text(init.to_string())).await.is_err() {
+        return;
+    }
+
+    let mut send_task = tokio::spawn(async move {
+        while let Ok(line) = rx.recv().await {
+            let msg = serde_json::json!({ "type": "line", "line": line }).to_string();
+            if sender.send(Message::Text(msg)).await.is_err() {
+                break;
+            }
+        }
+    });
+    let mut recv_task = tokio::spawn(async move { while receiver.next().await.is_some() {} });
+    tokio::select! {
+        _ = &mut send_task => recv_task.abort(),
+        _ = &mut recv_task => send_task.abort(),
+    }
 }
 
 async fn ws_handler(ws: WebSocketUpgrade, State(state): State<SharedState>) -> impl IntoResponse {

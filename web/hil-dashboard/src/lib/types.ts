@@ -121,6 +121,14 @@ export interface GatewayResponse {
   snapshot: GatewaySnapshot;
 }
 
+export type GatewayMode = "hardware" | "simulation";
+
+export interface GatewayStatus {
+  mode: GatewayMode;
+  connected: boolean;
+  port: string | null;
+}
+
 export type GatewayCommand =
   | { command: "net_toggle_downstream" }
   | { command: "snmp_set"; oid: string; value: string }

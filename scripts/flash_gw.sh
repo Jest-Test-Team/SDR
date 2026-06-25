@@ -27,7 +27,11 @@ SDKDEF="${ROOT}/firmware/esp32s3-gateway/sdkconfig.defaults"
 # Force sdkconfig regen when defaults change
 rm -f "${ROOT}"/target/xtensa-esp32s3-espidf/release/build/esp-idf-sys-*/out/sdkconfig 2>/dev/null || true
 
-echo "Building esp32s3-gateway..."
+# The S3 software-sim node talks to the ESP32 gateway over ESP-NOW; it needs the
+# ESP32 gateway's MAC at build time. Override GATEWAY_MAC if your ESP32 differs.
+export GATEWAY_MAC="${GATEWAY_MAC:-CC:7B:5C:25:9E:20}"
+
+echo "Building esp32s3-gateway (S3 software-sim node, gateway peer ${GATEWAY_MAC})..."
 cargo +esp build --release -p esp32s3-gateway \
   --config 'build.target="xtensa-esp32s3-espidf"' \
   --config 'unstable.build-std=["std","panic_abort"]' \

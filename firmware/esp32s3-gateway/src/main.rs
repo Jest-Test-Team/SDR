@@ -1,6 +1,29 @@
 #![no_main]
 
-use core::cell::RefCell;
+//! ESP32-S3 **software-sim node** role (Secure Telemetry Gateway topology).
+//!
+//! ```text
+//! Mac (control-plane) --USB(this board)-- ESP32-S3 [software-sim sender/receiver]
+//!                                              ^ ESP-NOW
+//!                                          ESP32 [gateway]
+//! ```
+//!
+//! The S3 is the server-facing endpoint. Over native USB it accepts text
+//! commands from the Mac and turns them into ESP-NOW traffic to the ESP32
+//! gateway, then prints the gateway's replies back over USB:
+//!
+//! - `GW,HEALTH`              -> gateway free heap / uptime / Wi-Fi mode
+//! - `GW,TOGGLE`              -> toggle downstream AP on the gateway
+//! - `GW,DEAUTH`              -> kick downstream stations
+//! - `GW,STALIST`             -> connected station count
+//! - `GW,SNMP_SET,<oid>,<val>`-> write a simulated OID
+//! - `GW,SNMP_GET,<oid>`      -> read a simulated OID
+//! - `SIM,SEND,<0|1>`         -> send a TelemetryFrame (gateway echoes it back)
+//!
+//! Gateway replies arrive over ESP-NOW and are printed as `GWRESP ...` /
+//! `SIMRECV ...` lines for the host CLI (`scripts/sim_node.py`).
+
+use std::cell::RefCell;
 use std::sync::Mutex;
 
 use esp_idf_svc::espnow::{EspNow, PeerInfo, ReceiveInfo};
@@ -10,107 +33,207 @@ use esp_idf_svc::hal::io::Write;
 use esp_idf_svc::hal::usb_serial::{UsbSerialConfig, UsbSerialDriver};
 use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
+use esp_idf_svc::sys::{
+    esp_wifi_set_channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE,
+};
 use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
 use heapless::Deque;
-use protocol::{ESP_NOW_VENDOR_ID, decode_espnow, encode_frame};
+use protocol::frame::{Payload, TelemetryFrame};
+use protocol::gwlink::{GwMsg, decode_gw_espnow, encode_gw_espnow};
+use protocol::{decode_espnow, encode_espnow};
 
-const MAX_PENDING: usize = 8;
-const MAX_FRAME: usize = 256;
+const GATEWAY_MAC: &str = env!("GATEWAY_MAC");
 const ESPNOW_CHANNEL: u8 = 1;
-const BROADCAST_MAC: [u8; 6] = [0xFF; 6];
+const MAX_PENDING: usize = 8;
+
+static SEQ: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
+
+type PktBuf = heapless::Vec<u8, { protocol::MAX_ESP_NOW_PAYLOAD }>;
+
+/// Inbound ESP-NOW payloads (gateway replies / telemetry echoes), drained in
+/// the main loop where the USB serial driver lives.
+static RX_INBOX: Mutex<RefCell<Deque<PktBuf, MAX_PENDING>>> =
+    Mutex::new(RefCell::new(Deque::new()));
+
+fn parse_mac(s: &str) -> [u8; 6] {
+    let mut mac = [0u8; 6];
+    let mut idx = 0usize;
+    let mut hi: Option<u8> = None;
+    for byte in s.bytes() {
+        let v = match byte {
+            b'0'..=b'9' => byte - b'0',
+            b'a'..=b'f' => byte - b'a' + 10,
+            b'A'..=b'F' => byte - b'A' + 10,
+            _ => continue,
+        };
+        if let Some(high) = hi {
+            if idx < 6 {
+                mac[idx] = (high << 4) | v;
+                idx += 1;
+            }
+            hi = None;
+        } else {
+            hi = Some(v);
+        }
+    }
+    mac
+}
 
 fn lock_wifi_channel(channel: u8) {
-    use esp_idf_svc::sys::{esp_wifi_set_channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE};
     esp_idf_svc::sys::esp!(unsafe {
         esp_wifi_set_channel(channel, wifi_second_chan_t_WIFI_SECOND_CHAN_NONE)
     })
     .expect("esp_wifi_set_channel");
 }
 
-static USB_TX_COUNT: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
-
-type FrameBuf = heapless::Vec<u8, MAX_FRAME>;
-
-static PENDING: Mutex<RefCell<Deque<FrameBuf, MAX_PENDING>>> =
-    Mutex::new(RefCell::new(Deque::new()));
-
-fn enqueue_uart_frame(data: &[u8]) {
-    let Ok(cell) = PENDING.lock() else {
+fn enqueue_rx(data: &[u8]) {
+    let Ok(cell) = RX_INBOX.lock() else {
         return;
     };
-    let mut frame = FrameBuf::new();
-    if frame.extend_from_slice(data).is_err() {
-        log::warn!("UART frame too large, dropping");
+    let mut buf = PktBuf::new();
+    if buf.extend_from_slice(data).is_err() {
         return;
     }
-    if frame.push(0).is_err() {
-        log::warn!("UART delimiter failed, dropping");
-        return;
-    }
-    let _ = cell.borrow_mut().push_back(frame);
+    let _ = cell.borrow_mut().push_back(buf);
 }
 
-fn drain_to_usb(serial: &mut UsbSerialDriver<'_>) {
-    loop {
-        let pending: Option<FrameBuf> = {
-            let Ok(cell) = PENDING.lock() else {
-                return;
-            };
-            cell.borrow_mut().pop_front()
-        };
-        let Some(uart_frame) = pending else {
-            break;
-        };
-        if let Err(e) = serial.write_all(&uart_frame) {
-            log::error!("USB serial write failed: {:?}", e);
-        } else {
-            let n = USB_TX_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed) + 1;
-            log::info!("USB TX frame #{} ({} bytes)", n, uart_frame.len());
-            let _ = serial.flush();
+fn send_gw(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], msg: &GwMsg) {
+    match encode_gw_espnow(msg) {
+        Ok(bytes) => {
+            if let Err(e) = esp_now.send(gateway_mac, &bytes) {
+                log::warn!("ESP-NOW gw send failed: {:?}", e);
+            }
+        }
+        Err(e) => log::error!("encode_gw_espnow failed: {:?}", e),
+    }
+}
+
+fn send_sim(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], value: bool) {
+    let seq = SEQ.fetch_add(1, core::sync::atomic::Ordering::Relaxed) + 1;
+    let frame = TelemetryFrame {
+        seq,
+        timestamp_ms: 0,
+        node_id: 1,
+        payload: Payload::BoolCmd(value),
+    };
+    if let Ok(bytes) = encode_espnow(&frame) {
+        if let Err(e) = esp_now.send(gateway_mac, &bytes) {
+            log::warn!("ESP-NOW sim send failed: {:?}", e);
         }
     }
 }
 
-fn add_broadcast_peer(esp_now: &EspNow<'_>) -> Result<(), esp_idf_svc::sys::EspError> {
-    if esp_now.peer_exists(BROADCAST_MAC).unwrap_or(false) {
-        esp_now.del_peer(BROADCAST_MAC)?;
-    }
-    let mut peer = PeerInfo::default();
-    peer.peer_addr = BROADCAST_MAC;
-    peer.channel = ESPNOW_CHANNEL;
-    peer.encrypt = false;
-    esp_now.add_peer(peer)
+fn write_line(serial: &mut UsbSerialDriver<'_>, line: &str) {
+    let _ = serial.write_all(line.as_bytes());
+    let _ = serial.write_all(b"\n");
+    let _ = serial.flush();
 }
 
-fn drain_control_from_usb(
+/// Translate one command line from the Mac into ESP-NOW traffic.
+fn handle_command(
     serial: &mut UsbSerialDriver<'_>,
     esp_now: &EspNow<'_>,
+    gateway_mac: [u8; 6],
+    line: &str,
+) {
+    let mut fields = line.trim().split(',');
+    match (fields.next(), fields.next()) {
+        (Some("GW"), Some("HEALTH")) => send_gw(esp_now, gateway_mac, &GwMsg::HealthReq),
+        (Some("GW"), Some("TOGGLE")) => send_gw(esp_now, gateway_mac, &GwMsg::ToggleReq),
+        (Some("GW"), Some("DEAUTH")) => send_gw(esp_now, gateway_mac, &GwMsg::DeauthReq),
+        (Some("GW"), Some("STALIST")) => send_gw(esp_now, gateway_mac, &GwMsg::StaListReq),
+        (Some("GW"), Some("SNMP_SET")) => {
+            let oid = fields.next().unwrap_or("");
+            let value = fields.next().unwrap_or("");
+            send_gw(
+                esp_now,
+                gateway_mac,
+                &GwMsg::SnmpSetReq {
+                    oid: oid.to_string(),
+                    value: value.to_string(),
+                },
+            );
+        }
+        (Some("GW"), Some("SNMP_GET")) => {
+            let oid = fields.next().unwrap_or("");
+            send_gw(
+                esp_now,
+                gateway_mac,
+                &GwMsg::SnmpGetReq {
+                    oid: oid.to_string(),
+                },
+            );
+        }
+        (Some("SIM"), Some("SEND")) => {
+            let value = matches!(fields.next(), Some("1") | Some("true"));
+            send_sim(esp_now, gateway_mac, value);
+            write_line(serial, "SIMSENT ok");
+        }
+        _ => write_line(serial, &format!("ERR unknown command: {}", line.trim())),
+    }
+}
+
+/// Format an inbound ESP-NOW payload as a USB line for the host.
+fn format_inbound(data: &[u8]) -> String {
+    if let Ok(frame) = decode_espnow(data) {
+        return format!(
+            "SIMRECV node={} seq={} payload={:?}",
+            frame.node_id, frame.seq, frame.payload
+        );
+    }
+    match decode_gw_espnow(data) {
+        Ok(GwMsg::HealthResp {
+            free_heap,
+            uptime_ms,
+            rx_count,
+            wifi_mode,
+        }) => format!(
+            "GWRESP HEALTH free_heap={} uptime_ms={} rx_count={} wifi_mode={:?}",
+            free_heap, uptime_ms, rx_count, wifi_mode
+        ),
+        Ok(GwMsg::ToggleResp {
+            downstream_online,
+            wifi_mode,
+        }) => format!(
+            "GWRESP TOGGLE downstream_online={} wifi_mode={:?}",
+            downstream_online, wifi_mode
+        ),
+        Ok(GwMsg::DeauthResp { kicked }) => format!("GWRESP DEAUTH kicked={}", kicked),
+        Ok(GwMsg::StaListResp { count }) => format!("GWRESP STALIST count={}", count),
+        Ok(GwMsg::SnmpResp { oid, value, ok }) => format!(
+            "GWRESP SNMP oid={} value={} ok={}",
+            oid,
+            value.as_deref().unwrap_or("<none>"),
+            ok
+        ),
+        Ok(other) => format!("GWRESP other={:?}", other),
+        Err(e) => format!("ERR undecodable inbound: {}", e),
+    }
+}
+
+fn read_commands(
+    serial: &mut UsbSerialDriver<'_>,
+    esp_now: &EspNow<'_>,
+    gateway_mac: [u8; 6],
     rx_buf: &mut [u8; 128],
-    line: &mut heapless::Vec<u8, 128>,
+    line: &mut heapless::Vec<u8, 160>,
 ) {
     match serial.read(rx_buf, 0) {
-        Ok(0) => {}
+        Ok(0) | Err(_) => {}
         Ok(n) => {
             for &byte in &rx_buf[..n] {
-                if byte == b'\n' {
-                    if line.starts_with(b"SDRCTL,") {
-                        match esp_now.send(BROADCAST_MAC, line.as_slice()) {
-                            Ok(()) => log::info!(
-                                "forwarded firmware control over ESP-NOW: {}",
-                                core::str::from_utf8(line.as_slice()).unwrap_or("<binary>")
-                            ),
-                            Err(e) => log::warn!("firmware control ESP-NOW send failed: {:?}", e),
+                if byte == b'\n' || byte == b'\r' {
+                    if !line.is_empty() {
+                        if let Ok(text) = core::str::from_utf8(line.as_slice()) {
+                            let owned = text.to_string();
+                            handle_command(serial, esp_now, gateway_mac, &owned);
                         }
+                        line.clear();
                     }
-                    line.clear();
                 } else if line.push(byte).is_err() {
-                    log::warn!("firmware control line too long, dropping");
                     line.clear();
                 }
             }
-        }
-        Err(e) => {
-            log::warn!("USB serial read failed: {:?}", e);
         }
     }
 }
@@ -118,7 +241,7 @@ fn drain_control_from_usb(
 #[unsafe(no_mangle)]
 fn main() -> ! {
     EspLogger::initialize_default();
-    log::info!("ESP32-S3 Gateway starting");
+    log::info!("ESP32-S3 software-sim node starting");
 
     let peripherals = esp_idf_svc::hal::peripherals::Peripherals::take().unwrap();
     let sys_loop = EspSystemEventLoop::take().unwrap();
@@ -133,53 +256,32 @@ fn main() -> ! {
     .unwrap();
     wifi.start().unwrap();
     lock_wifi_channel(ESPNOW_CHANNEL);
-    log::info!("WiFi locked to channel {}", ESPNOW_CHANNEL);
 
     let esp_now = EspNow::take().unwrap();
     lock_wifi_channel(ESPNOW_CHANNEL);
-    match add_broadcast_peer(&esp_now) {
-        Ok(()) => log::info!("ESP-NOW broadcast control peer ready"),
-        Err(e) => log::warn!("add broadcast peer failed: {:?}", e),
+    let gateway_mac = parse_mac(GATEWAY_MAC);
+    let mut peer = PeerInfo::default();
+    peer.peer_addr = gateway_mac;
+    peer.channel = ESPNOW_CHANNEL;
+    peer.encrypt = false;
+    match esp_now.add_peer(peer) {
+        Ok(()) => log::info!(
+            "ESP-NOW ready, gateway={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+            gateway_mac[0],
+            gateway_mac[1],
+            gateway_mac[2],
+            gateway_mac[3],
+            gateway_mac[4],
+            gateway_mac[5]
+        ),
+        Err(e) => log::error!("add_peer failed: {:?}", e),
     }
     esp_now
-        .register_recv_cb(|info: &ReceiveInfo, data: &[u8]| {
-            log::info!(
-                "ESP-NOW raw {} bytes from {:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
-                data.len(),
-                info.src_addr[0],
-                info.src_addr[1],
-                info.src_addr[2],
-                info.src_addr[3],
-                info.src_addr[4],
-                info.src_addr[5]
-            );
-            if data.first() != Some(&ESP_NOW_VENDOR_ID) {
-                return;
-            }
-            match decode_espnow(data) {
-                Ok(frame) => {
-                    log::info!(
-                        "ESP-NOW RX from {:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X} node={} seq={}",
-                        info.src_addr[0],
-                        info.src_addr[1],
-                        info.src_addr[2],
-                        info.src_addr[3],
-                        info.src_addr[4],
-                        info.src_addr[5],
-                        frame.node_id,
-                        frame.seq
-                    );
-                    match encode_frame(&frame) {
-                        Ok(uart_frame) => enqueue_uart_frame(&uart_frame),
-                        Err(_) => log::error!("encode_frame failed"),
-                    }
-                }
-                Err(e) => log::warn!("decode_espnow failed: {}", e),
-            }
+        .register_recv_cb(|_info: &ReceiveInfo, data: &[u8]| {
+            enqueue_rx(data);
         })
         .unwrap();
 
-    // Telemetry to PC via native USB (shows as /dev/cu.usbmodem* on macOS).
     let usb_config = UsbSerialConfig::new()
         .tx_buffer_size(1024)
         .rx_buffer_size(256);
@@ -191,18 +293,31 @@ fn main() -> ! {
     )
     .unwrap();
 
-    log::info!("Gateway ready (USB serial bridge to PC)");
-    let mut control_rx_buf = [0u8; 128];
-    let mut control_line = heapless::Vec::<u8, 128>::new();
+    write_line(&mut usb_serial, "READY software-sim node");
+    log::info!("software-sim node ready (USB command interface)");
+
+    let mut rx_buf = [0u8; 128];
+    let mut line = heapless::Vec::<u8, 160>::new();
 
     loop {
-        drain_to_usb(&mut usb_serial);
-        drain_control_from_usb(
-            &mut usb_serial,
-            &esp_now,
-            &mut control_rx_buf,
-            &mut control_line,
-        );
+        read_commands(&mut usb_serial, &esp_now, gateway_mac, &mut rx_buf, &mut line);
+
+        // Drain inbound ESP-NOW replies to USB.
+        loop {
+            let next = {
+                let Ok(cell) = RX_INBOX.lock() else {
+                    break;
+                };
+                let item = cell.borrow_mut().pop_front();
+                item
+            };
+            let Some(buf) = next else {
+                break;
+            };
+            let out = format_inbound(&buf);
+            write_line(&mut usb_serial, &out);
+        }
+
         FreeRtos::delay_ms(5);
     }
 }

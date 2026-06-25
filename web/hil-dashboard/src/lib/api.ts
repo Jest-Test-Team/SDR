@@ -1,4 +1,4 @@
-import type { PipelineSnapshot, SimConfig, TelemetryEvent, Kpis, LiveEvent, LiveStatus, FirmwareConfigResponse, SidecarTransport, GatewaySnapshot, GatewayCommand, GatewayResponse } from "./types";
+import type { PipelineSnapshot, SimConfig, TelemetryEvent, Kpis, LiveEvent, LiveStatus, FirmwareConfigResponse, SidecarTransport, GatewaySnapshot, GatewayCommand, GatewayResponse, GatewayStatus } from "./types";
 
 const API_BASE = "";
 
@@ -90,6 +90,21 @@ export async function fetchGateway(): Promise<GatewaySnapshot> {
   const res = await fetch(`${API_BASE}/api/v1/gateway`, { cache: "no-store" });
   if (!res.ok) throw new Error("gateway fetch failed");
   return res.json();
+}
+
+export async function fetchGatewayStatus(): Promise<GatewayStatus> {
+  const res = await fetch(`${API_BASE}/api/v1/gateway/status`, { cache: "no-store" });
+  if (!res.ok) throw new Error("gateway status fetch failed");
+  return res.json();
+}
+
+export function gatewayWsUrl(): string {
+  const env = process.env.NEXT_PUBLIC_HIL_WS_URL;
+  if (env) return env.replace(/\/ws\/live$/, "/ws/gateway");
+  if (typeof window !== "undefined") {
+    return "ws://127.0.0.1:8090/ws/gateway";
+  }
+  return "";
 }
 
 export async function sendGatewayCommand(command: GatewayCommand): Promise<GatewayResponse> {

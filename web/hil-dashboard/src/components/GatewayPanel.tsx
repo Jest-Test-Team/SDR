@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { fetchGateway, sendGatewayCommand } from "@/lib/api";
-import type { GatewayCommand, GatewayResponse, GatewaySnapshot } from "@/lib/types";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchGateway, fetchGatewayStatus, gatewayWsUrl, sendGatewayCommand } from "@/lib/api";
+import type { GatewayCommand, GatewayResponse, GatewaySnapshot, GatewayStatus } from "@/lib/types";
 
 function heapPercent(snap: GatewaySnapshot): number {
   if (snap.heap_total_bytes === 0) return 0;
@@ -11,9 +11,12 @@ function heapPercent(snap: GatewaySnapshot): number {
 
 export function GatewayPanel() {
   const [snap, setSnap] = useState<GatewaySnapshot | null>(null);
+  const [status, setStatus] = useState<GatewayStatus | null>(null);
+  const [monitor, setMonitor] = useState<string[]>([]);
   const [lastResponse, setLastResponse] = useState<GatewayResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const monitorRef = useRef<HTMLDivElement | null>(null);
 
   const [oid, setOid] = useState("1.3.6.1.4.1.custom.isolate");
   const [value, setValue] = useState("true");
@@ -31,7 +34,33 @@ export function GatewayPanel() {
 
   useEffect(() => {
     refresh();
+    fetchGatewayStatus().then(setStatus).catch(() => setStatus(null));
   }, [refresh]);
+
+  useEffect(() => {
+    const url = gatewayWsUrl();
+    if (!url) return;
+    const ws = new WebSocket(url);
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === "hello") {
+          if (msg.status) setStatus(msg.status);
+          if (msg.snapshot) setSnap(msg.snapshot);
+        }
+        if (msg.type === "line" && typeof msg.line === "string") {
+          setMonitor((prev) => [...prev.slice(-200), msg.line]);
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    return () => ws.close();
+  }, []);
+
+  useEffect(() => {
+    monitorRef.current?.scrollTo({ top: monitorRef.current.scrollHeight });
+  }, [monitor]);
 
   const run = async (command: GatewayCommand) => {
     setBusy(true);
@@ -55,6 +84,16 @@ export function GatewayPanel() {
           <p className="subtitle">
             ESP32-S3 AP-STA 閘道：下行切換、模擬 SNMP、系統健康、MAC 過濾
           </p>
+        </div>
+        <div className="header-actions">
+          {status?.mode === "hardware" ? (
+            <span className={status.connected ? "mode-badge real" : "mode-badge real warn"}>
+              ● {status.connected ? "REAL HARDWARE" : "HARDWARE (disconnected)"}
+              {status.port ? ` — ${status.port}` : ""}
+            </span>
+          ) : (
+            <span className="mode-badge sim">● SIMULATION MODE</span>
+          )}
         </div>
       </header>
 
@@ -86,6 +125,24 @@ export function GatewayPanel() {
           <p>已處理的閘道指令</p>
         </div>
       </section>
+      <div className="panel">
+        <h3>即時監看 / Live Monitor {status?.mode === "hardware" ? "(serial)" : "(simulation)"}</h3>
+        <div className="gw-monitor" ref={monitorRef}>
+          {monitor.length ? (
+            monitor.map((line, i) => (
+              <div key={i} className="mono gw-monitor-line">
+                {line}
+              </div>
+            ))
+          ) : (
+            <div className="mono gw-monitor-line muted">
+              {status?.mode === "hardware"
+                ? "等待板子訊息… / waiting for board output…"
+                : "模擬模式：連接 S3 板子以查看即時序列輸出 / connect the S3 board for live serial"}
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="panel">
         <h3>閘道指令 / Gateway Commands</h3>

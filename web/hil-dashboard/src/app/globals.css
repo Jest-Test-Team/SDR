@@ -634,3 +634,52 @@ body {
   border-left: 2px solid var(--border);
   color: var(--muted);
 }
+
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+
+.mode-badge.real {
+  color: var(--green);
+  border-color: var(--green);
+  background: rgba(62, 207, 142, 0.1);
+}
+
+.mode-badge.real.warn {
+  color: var(--orange);
+  border-color: var(--orange);
+  background: rgba(245, 166, 35, 0.1);
+}
+
+.mode-badge.sim {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(77, 163, 255, 0.1);
+}
+
+.gw-monitor {
+  max-height: 260px;
+  overflow-y: auto;
+  background: #0b0d12;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+}
+
+.gw-monitor-line {
+  padding: 0.1rem 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--green);
+}
+
+.gw-monitor-line.muted {
+  color: var(--muted);
+}

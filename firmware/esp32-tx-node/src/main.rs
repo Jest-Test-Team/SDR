@@ -1,212 +1,312 @@
 #![no_main]
 
+//! ESP32 **gateway** role (Secure Telemetry Gateway topology).
+//!
+//! ```text
+//! Mac --USB-- ESP32-S3 [software-sim node] --ESP-NOW(this link)-- ESP32 [gateway]
+//! ```
+//!
+//! The gateway listens for [`GwMsg`] control requests over ESP-NOW from the S3
+//! node and executes them on real hardware:
+//! - `HealthReq`  -> real `esp_get_free_heap_size()`, uptime, RX count, Wi-Fi mode
+//! - `ToggleReq`  -> bring the downstream AP up/down (`Configuration::Mixed` <-> `Client`)
+//! - `DeauthReq`  -> `esp_wifi_deauth_sta(0)` (kick all downstream stations)
+//! - `StaListReq` -> count of connected stations
+//! - `SnmpSetReq`/`SnmpGetReq` -> a small simulated MIB held in RAM
+//!
+//! It also echoes any telemetry [`TelemetryFrame`] back to the sender so the S3
+//! "receiver" role can observe a round trip.
+//!
+//! NOTE: This board was previously the TX node. Reconfiguring Wi-Fi while
+//! ESP-NOW is active is the riskiest part; the channel is re-locked after every
+//! reconfiguration to keep the ESP-NOW control link alive.
+
 mod espnow_setup;
 mod mac;
 
-use esp_idf_svc::espnow::EspNow;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::sync::Mutex;
+
+use esp_idf_svc::espnow::{EspNow, PeerInfo, ReceiveInfo};
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
-use esp_idf_svc::hal::gpio::{PinDriver, Pull};
 use esp_idf_svc::log::EspLogger;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::sys;
-use esp_idf_svc::wifi::{ClientConfiguration, Configuration, EspWifi};
-use protocol::encode_espnow;
+use esp_idf_svc::wifi::{
+    AccessPointConfiguration, AuthMethod, ClientConfiguration, Configuration, EspWifi,
+};
+use heapless::Deque;
 use protocol::frame::{Payload, TelemetryFrame};
+use protocol::gwlink::{GwMsg, WifiMode, decode_gw_espnow, encode_gw_espnow};
+use protocol::{decode_espnow, encode_espnow};
 
-use crate::espnow_setup::{
-    ESPNOW_CHANNEL, add_gateway_peer, disable_wifi_power_save, lock_wifi_channel,
-    set_max_tx_power_dbm,
-};
-use crate::mac::parse_mac;
+use crate::espnow_setup::{ESPNOW_CHANNEL, disable_wifi_power_save, lock_wifi_channel};
 
-const GATEWAY_MAC: &str = env!("GATEWAY_MAC");
-const NODE_ID: u8 = {
-    const ID_STR: &str = env!("NODE_ID");
-    parse_node_id(ID_STR)
-};
-const DEBOUNCE_MS: u32 = 50;
-const HEARTBEAT_MS: u64 = 2_000;
-const TX_POWER_DBM: Option<&str> = option_env!("TX_POWER_DBM");
+const AP_SSID: &str = "GATEWAY_ISOLATED_NET";
+const AP_PASSWORD: &str = "sdrgateway";
+const MAX_PENDING: usize = 8;
 
-static SEQ: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
-static BOOT_PAYLOAD_BYTE: core::sync::atomic::AtomicU8 = core::sync::atomic::AtomicU8::new(0xB2);
+static RX_COUNT: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 
-const fn parse_node_id(s: &str) -> u8 {
-    let bytes = s.as_bytes();
-    if bytes.is_empty() {
-        return 1;
-    }
-    let mut value = 0u8;
-    let mut i = 0;
-    while i < bytes.len() {
-        let b = bytes[i];
-        if b < b'0' || b > b'9' {
-            break;
-        }
-        value = value.saturating_mul(10).saturating_add(b - b'0');
-        i += 1;
-    }
-    value
-}
+type PktBuf = heapless::Vec<u8, { protocol::MAX_ESP_NOW_PAYLOAD }>;
+
+/// Inbox of (source MAC, raw ESP-NOW payload) filled by the recv callback and
+/// drained in the main loop (which owns `EspNow` + `EspWifi`).
+static INBOX: Mutex<RefCell<Deque<([u8; 6], PktBuf), MAX_PENDING>>> =
+    Mutex::new(RefCell::new(Deque::new()));
 
 fn now_ms() -> u64 {
     unsafe { (sys::esp_timer_get_time() / 1_000) as u64 }
 }
 
-fn send_payload(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], payload: Payload) {
-    let seq = SEQ.fetch_add(1, core::sync::atomic::Ordering::Relaxed) + 1;
-    let frame = TelemetryFrame {
-        seq,
-        timestamp_ms: now_ms(),
-        node_id: NODE_ID,
-        payload,
-    };
+fn free_heap() -> u32 {
+    unsafe { sys::esp_get_free_heap_size() }
+}
 
-    let Ok(packet) = encode_espnow(&frame) else {
-        log::error!("encode_espnow failed");
+fn enqueue(src: [u8; 6], data: &[u8]) {
+    let Ok(cell) = INBOX.lock() else {
         return;
     };
+    let mut buf = PktBuf::new();
+    if buf.extend_from_slice(data).is_err() {
+        log::warn!("inbox packet too large, dropping");
+        return;
+    }
+    let _ = cell.borrow_mut().push_back((src, buf));
+}
 
-    match esp_now.send(gateway_mac, &packet) {
-        Ok(()) => log::info!(
-            "ESP-NOW sent node={} seq={} payload={:?}",
-            NODE_ID,
-            seq,
-            frame.payload
-        ),
-        Err(e) => log::error!("ESP-NOW send failed: {:?}", e),
+fn ensure_peer(esp_now: &EspNow<'_>, mac: [u8; 6]) {
+    if esp_now.peer_exists(mac).unwrap_or(false) {
+        return;
+    }
+    let mut peer = PeerInfo::default();
+    peer.peer_addr = mac;
+    peer.channel = ESPNOW_CHANNEL;
+    peer.encrypt = false;
+    if let Err(e) = esp_now.add_peer(peer) {
+        log::warn!("add_peer failed: {:?}", e);
     }
 }
 
-fn send_bool(esp_now: &EspNow<'_>, gateway_mac: [u8; 6], value: bool) {
-    send_payload(esp_now, gateway_mac, Payload::BoolCmd(value));
-}
-
-fn send_boot_payload(esp_now: &EspNow<'_>, gateway_mac: [u8; 6]) {
-    let value = BOOT_PAYLOAD_BYTE.load(core::sync::atomic::Ordering::Relaxed);
-    send_payload(esp_now, gateway_mac, Payload::ByteCmd(value));
-}
-
-fn apply_configured_tx_power() {
-    let Some(raw) = TX_POWER_DBM else {
-        log::info!("TX_POWER_DBM not set; using ESP-IDF default Wi-Fi TX power");
-        return;
-    };
-    match raw.parse::<i8>() {
-        Ok(dbm) => set_max_tx_power_dbm(dbm),
-        Err(_) => log::warn!("invalid TX_POWER_DBM='{}'; using ESP-IDF default", raw),
+fn reply(esp_now: &EspNow<'_>, dst: [u8; 6], msg: &GwMsg) {
+    match encode_gw_espnow(msg) {
+        Ok(bytes) => {
+            ensure_peer(esp_now, dst);
+            if let Err(e) = esp_now.send(dst, &bytes) {
+                log::warn!("reply send failed: {:?}", e);
+            }
+        }
+        Err(e) => log::error!("encode_gw_espnow failed: {:?}", e),
     }
 }
 
-fn parse_i8(bytes: &[u8]) -> Option<i8> {
-    core::str::from_utf8(bytes).ok()?.parse().ok()
+struct Gateway {
+    downstream_online: bool,
+    oids: HashMap<String, String>,
 }
 
-fn parse_u8(bytes: &[u8]) -> Option<u8> {
-    core::str::from_utf8(bytes).ok()?.parse().ok()
-}
-
-fn apply_runtime_control(data: &[u8]) {
-    if !data.starts_with(b"SDRCTL,") {
-        return;
-    }
-    let mut fields = data.split(|b| *b == b',');
-    let _tag = fields.next();
-    let Some(node) = fields.next().and_then(parse_u8) else {
-        log::warn!("invalid firmware control node field");
-        return;
-    };
-    if node != 0 && node != NODE_ID {
-        return;
-    }
-    if let Some(tx_power) = fields.next().and_then(parse_i8) {
-        if tx_power != i8::MIN {
-            set_max_tx_power_dbm(tx_power);
+impl Gateway {
+    fn new() -> Self {
+        let mut oids = HashMap::new();
+        oids.insert("1.3.6.1.4.1.custom.isolate".to_string(), "false".to_string());
+        oids.insert("1.3.6.1.4.1.custom.relay".to_string(), "off".to_string());
+        Self {
+            downstream_online: true,
+            oids,
         }
     }
-    if let Some(boot_byte) = fields.next().and_then(parse_u8) {
-        BOOT_PAYLOAD_BYTE.store(boot_byte, core::sync::atomic::Ordering::Relaxed);
-        log::info!("BOOT payload byte set to 0x{:02X}", boot_byte);
+
+    fn wifi_mode(&self) -> WifiMode {
+        if self.downstream_online {
+            WifiMode::ApSta
+        } else {
+            WifiMode::Sta
+        }
+    }
+
+    /// Apply the current downstream state to the Wi-Fi driver, then re-lock the
+    /// ESP-NOW channel so the control link survives the reconfiguration.
+    fn apply_wifi(&self, wifi: &mut EspWifi<'_>) {
+        let sta = ClientConfiguration {
+            ssid: "".try_into().unwrap(),
+            channel: Some(ESPNOW_CHANNEL),
+            ..Default::default()
+        };
+        let result = if self.downstream_online {
+            let ap = AccessPointConfiguration {
+                ssid: AP_SSID.try_into().unwrap(),
+                password: AP_PASSWORD.try_into().unwrap(),
+                auth_method: AuthMethod::WPA2Personal,
+                channel: ESPNOW_CHANNEL,
+                ..Default::default()
+            };
+            wifi.set_configuration(&Configuration::Mixed(sta, ap))
+        } else {
+            wifi.set_configuration(&Configuration::Client(sta))
+        };
+        if let Err(e) = result {
+            log::error!("set_configuration failed: {:?}", e);
+        }
+        lock_wifi_channel(ESPNOW_CHANNEL);
+        log::info!("wifi mode -> {:?}", self.wifi_mode());
+    }
+
+    fn handle(&mut self, esp_now: &EspNow<'_>, wifi: &mut EspWifi<'_>, src: [u8; 6], data: &[u8]) {
+        // Telemetry frame? echo it back so the S3 "receiver" sees a round trip.
+        if let Ok(frame) = decode_espnow(data) {
+            log::info!("telemetry node={} seq={} -> echo", frame.node_id, frame.seq);
+            let echo = TelemetryFrame {
+                seq: frame.seq,
+                timestamp_ms: now_ms(),
+                node_id: frame.node_id,
+                payload: Payload::ByteCmd(0xAC),
+            };
+            if let Ok(bytes) = encode_espnow(&echo) {
+                ensure_peer(esp_now, src);
+                let _ = esp_now.send(src, &bytes);
+            }
+            return;
+        }
+
+        let msg = match decode_gw_espnow(data) {
+            Ok(m) => m,
+            Err(e) => {
+                log::warn!("undecodable ESP-NOW packet: {}", e);
+                return;
+            }
+        };
+
+        let response = match msg {
+            GwMsg::HealthReq => GwMsg::HealthResp {
+                free_heap: free_heap(),
+                uptime_ms: now_ms(),
+                rx_count: RX_COUNT.load(core::sync::atomic::Ordering::Relaxed),
+                wifi_mode: self.wifi_mode(),
+            },
+            GwMsg::ToggleReq => {
+                self.downstream_online = !self.downstream_online;
+                self.apply_wifi(wifi);
+                GwMsg::ToggleResp {
+                    downstream_online: self.downstream_online,
+                    wifi_mode: self.wifi_mode(),
+                }
+            }
+            GwMsg::DeauthReq => {
+                let rc = unsafe { sys::esp_wifi_deauth_sta(0) };
+                log::info!("esp_wifi_deauth_sta(0) -> {}", rc);
+                GwMsg::DeauthResp {
+                    kicked: if rc == 0 { 1 } else { 0 },
+                }
+            }
+            GwMsg::StaListReq => GwMsg::StaListResp {
+                count: self.sta_count(),
+            },
+            GwMsg::SnmpSetReq { oid, value } => {
+                if self.downstream_online {
+                    self.oids.insert(oid.clone(), value.clone());
+                    GwMsg::SnmpResp {
+                        oid,
+                        value: Some(value),
+                        ok: true,
+                    }
+                } else {
+                    GwMsg::SnmpResp {
+                        oid,
+                        value: None,
+                        ok: false,
+                    }
+                }
+            }
+            GwMsg::SnmpGetReq { oid } => {
+                let value = if self.downstream_online {
+                    self.oids.get(&oid).cloned()
+                } else {
+                    None
+                };
+                let ok = value.is_some();
+                GwMsg::SnmpResp { oid, value, ok }
+            }
+            // Responses are not expected inbound on the gateway.
+            other => {
+                log::warn!("unexpected inbound message: {:?}", other);
+                return;
+            }
+        };
+
+        reply(esp_now, src, &response);
+    }
+
+    fn sta_count(&self) -> u32 {
+        if !self.downstream_online {
+            return 0;
+        }
+        let mut list: sys::wifi_sta_list_t = unsafe { core::mem::zeroed() };
+        let rc = unsafe { sys::esp_wifi_ap_get_sta_list(&mut list) };
+        if rc == 0 {
+            list.num as u32
+        } else {
+            0
+        }
     }
 }
 
 #[unsafe(no_mangle)]
 fn main() -> ! {
     EspLogger::initialize_default();
-    log::info!("ESP32 TX Node starting (node_id={})", NODE_ID);
+    log::info!("ESP32 Gateway starting (Secure Telemetry Gateway role)");
 
     let peripherals = esp_idf_svc::hal::peripherals::Peripherals::take().unwrap();
     let sys_loop = EspSystemEventLoop::take().unwrap();
     let nvs = EspDefaultNvsPartition::take().unwrap();
 
     let mut wifi = EspWifi::new(peripherals.modem, sys_loop, Some(nvs)).unwrap();
-    wifi.set_configuration(&Configuration::Client(ClientConfiguration {
-        ssid: "".try_into().unwrap(),
-        channel: Some(ESPNOW_CHANNEL),
-        ..Default::default()
-    }))
+    let mut gateway = Gateway::new();
+    // Start in AP-STA so the downstream network is up by default.
+    wifi.set_configuration(&Configuration::Mixed(
+        ClientConfiguration {
+            ssid: "".try_into().unwrap(),
+            channel: Some(ESPNOW_CHANNEL),
+            ..Default::default()
+        },
+        AccessPointConfiguration {
+            ssid: AP_SSID.try_into().unwrap(),
+            password: AP_PASSWORD.try_into().unwrap(),
+            auth_method: AuthMethod::WPA2Personal,
+            channel: ESPNOW_CHANNEL,
+            ..Default::default()
+        },
+    ))
     .unwrap();
     wifi.start().unwrap();
     lock_wifi_channel(ESPNOW_CHANNEL);
     disable_wifi_power_save();
-    apply_configured_tx_power();
+    log::info!("AP '{}' up on channel {}", AP_SSID, ESPNOW_CHANNEL);
 
     let esp_now = EspNow::take().unwrap();
     lock_wifi_channel(ESPNOW_CHANNEL);
-    let gateway_mac = parse_mac(GATEWAY_MAC);
-    match add_gateway_peer(&esp_now, gateway_mac) {
-        Ok(()) => log::info!(
-            "ESP-NOW ready, gateway={:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X} ch={}",
-            gateway_mac[0],
-            gateway_mac[1],
-            gateway_mac[2],
-            gateway_mac[3],
-            gateway_mac[4],
-            gateway_mac[5],
-            ESPNOW_CHANNEL
-        ),
-        Err(e) => log::error!("add_peer failed: {:?}", e),
-    }
     esp_now
-        .register_recv_cb(|_info, data| {
-            apply_runtime_control(data);
+        .register_recv_cb(|info: &ReceiveInfo, data: &[u8]| {
+            RX_COUNT.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+            enqueue(*info.src_addr, data);
         })
         .unwrap();
 
-    // BOOT button on GPIO0. Do not open UartDriver on UART0 — that port is the console.
-    let button = PinDriver::input(peripherals.pins.gpio0, Pull::Up).unwrap();
-    log::info!("main loop started (BOOT=GPIO0 trigger)");
-
-    let mut last_button_ms = 0u64;
-    let mut button_down = false;
-    let mut trigger_sent = false;
-    let mut last_heartbeat_ms = now_ms();
+    log::info!("Gateway ready, awaiting ESP-NOW control requests from S3 node");
 
     loop {
-        let pressed = button.is_low();
-        if pressed {
-            if !button_down {
-                button_down = true;
-                last_button_ms = now_ms();
-            } else if !trigger_sent && now_ms().saturating_sub(last_button_ms) >= DEBOUNCE_MS as u64
-            {
-                trigger_sent = true;
-                log::info!("BOOT pressed, sending ESP-NOW");
-                send_boot_payload(&esp_now, gateway_mac);
-            }
-        } else {
-            button_down = false;
-            trigger_sent = false;
+        let next = {
+            let Ok(cell) = INBOX.lock() else {
+                FreeRtos::delay_ms(10);
+                continue;
+            };
+            let item = cell.borrow_mut().pop_front();
+            item
+        };
+        if let Some((src, buf)) = next {
+            gateway.handle(&esp_now, &mut wifi, src, &buf);
         }
-
-        let now = now_ms();
-        if now.saturating_sub(last_heartbeat_ms) >= HEARTBEAT_MS {
-            last_heartbeat_ms = now;
-            log::info!("heartbeat");
-            send_bool(&esp_now, gateway_mac, false);
-        }
-
-        FreeRtos::delay_ms(10);
+        FreeRtos::delay_ms(5);
     }
 }
