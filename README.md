@@ -34,6 +34,11 @@ Hardware and simulator tracks publish the same `TelemetryFrame` values into the 
 - Firmware-real dashboard controls are ESP-NOW live telemetry, sequence numbers, BOOT action, heartbeat, runtime TX power, and runtime 8-bit BOOT payload.
 - Simulator-only or future-hardware controls are SNR, noise level, filter bandwidth, OOK threshold, and non-ESP-NOW modes.
 - `hil-simulator` is now a first-class software-sim sidecar: it can publish valid simulated frames through local ZMQ or through secure TLS 1.3/mTLS ingest at `control-plane`.
+- Secure Telemetry Gateway (software-sim) verified on real hardware on 2026-06-25:
+  ESP32-S3 software-sim node (USB to Mac) drives an ESP32 gateway over ESP-NOW;
+  `GW,HEALTH`/`TOGGLE`/`DEAUTH`/`STALIST`/`SNMP_*` all confirmed on-device, and the
+  dashboard `/gateway` page auto-detects real vs simulation mode. See
+  [Secure Telemetry Gateway](#secure-telemetry-gateway-software-sim-hardware-verified).
 
 ## Hardware
 
@@ -81,6 +86,113 @@ cargo run -p control-plane -- --health-port 8092
 ```
 
 When `SECURE_INGEST_ONLY=1` is set, the ZMQ subscriber is disabled and clients must use TLS 1.3 with a trusted client certificate.
+
+## Secure Telemetry Gateway (software-sim, hardware-verified)
+
+A second, command-oriented topology that runs the same gateway control surface as
+hardware **or** pure software, with the dashboard showing which mode is live.
+
+```text
+Mac (control-plane / dashboard)
+  | USB serial  (ESP32-S3 usbmodem)
+  v
+ESP32-S3  = software-sim sender + receiver  (server-facing endpoint)
+  ^  ESP-NOW  (protocol::gwlink, vendor id 0x1B)
+  |
+ESP32     = gateway (AP-STA: GATEWAY_ISOLATED_NET on ch 1)
+```
+
+### Board / role / script map
+
+> Note: the firmware crate names are legacy and **inverted** vs. these roles.
+
+| Board | Port | Flash script | Crate built | Role |
+|-------|------|--------------|-------------|------|
+| ESP32 (normal) | `usbserial` | `./scripts/flash_tx.sh` | `esp32-tx-node` | **Gateway** (AP-STA, executes commands) |
+| ESP32-S3 | `usbmodem` | `./scripts/flash_gw.sh` | `esp32s3-gateway` | **Software-sim node** (USB↔Mac, ESP-NOW↔gateway) |
+
+### Flash both boards
+
+```bash
+# ESP32 gateway (note its MAC from the boot log; default assumes CC:7B:5C:25:9E:20)
+./scripts/flash_tx.sh "" 460800 --monitor      # expect: "AP 'GATEWAY_ISOLATED_NET' up"
+
+# ESP32-S3 sim node (flash WITHOUT --monitor so the USB port stays free)
+./scripts/flash_gw.sh                          # bakes GATEWAY_MAC into the S3 build
+#   different ESP32 MAC:  GATEWAY_MAC="aa:bb:.." ./scripts/flash_gw.sh
+```
+
+### On-device command set
+
+The S3 accepts comma-separated USB lines and relays them to the gateway over
+ESP-NOW (`protocol::gwlink::GwMsg`), printing the replies back as
+`GWRESP ...` / `SIMRECV ...`:
+
+| USB line | Gateway action | Reply |
+|----------|----------------|-------|
+| `GW,HEALTH` | real `esp_get_free_heap_size()` + uptime + Wi-Fi mode | `GWRESP HEALTH free_heap=… wifi_mode=ApSta` |
+| `GW,TOGGLE` | AP up/down (`Mixed` ↔ `Client`) | `GWRESP TOGGLE downstream_online=… wifi_mode=…` |
+| `GW,DEAUTH` | `esp_wifi_deauth_sta(0)` (kick all) | `GWRESP DEAUTH kicked=…` |
+| `GW,STALIST` | connected station count | `GWRESP STALIST count=…` |
+| `GW,SNMP_SET,<oid>,<val>` | write simulated OID (in-RAM MIB) | `GWRESP SNMP oid=… value=… ok=true` |
+| `GW,SNMP_GET,<oid>` | read simulated OID | `GWRESP SNMP oid=… value=… ok=…` |
+| `SIM,SEND,<0\|1>` | send TelemetryFrame; gateway echoes it | `SIMRECV node=… seq=… payload=ByteCmd(172)` |
+
+### Verify from the CLI (no dashboard)
+
+`scripts/sim_node.py` is a stdlib-only client that drives the S3 over USB. The S3
+port can only be held by one process — close any espflash monitor first.
+
+```bash
+./scripts/sim_node.py GW,HEALTH
+./scripts/sim_node.py GW,SNMP_SET,1.3.6.1.4.1.custom.relay,on
+./scripts/sim_node.py GW,SNMP_GET,1.3.6.1.4.1.custom.relay
+./scripts/sim_node.py GW,TOGGLE          # GATEWAY_ISOLATED_NET disappears from Wi-Fi scan
+./scripts/sim_node.py SIM,SEND,1
+```
+
+Proof it is real hardware (not the sim): `free_heap` is a live, changing number
+(e.g. `221272`), and `GW,TOGGLE` makes the `GATEWAY_ISOLATED_NET` AP physically
+appear/disappear in a phone's Wi-Fi list.
+
+### Drive it from the dashboard (real ⟷ simulation)
+
+`hil-simulator` opens the S3 serial port when `HIL_GW_SERIAL` is set; otherwise it
+serves the in-memory `GatewaySim`. The `/gateway` page shows a **REAL HARDWARE**
+vs **SIMULATION MODE** badge and a live serial monitor (`/ws/gateway`).
+
+```bash
+# IMPORTANT: kill any stale hil-simulator first, or it keeps serving the old mode
+pkill -f hil-simulator; sleep 1
+lsof /dev/cu.usbmodem1101                       # must be empty (no monitor/CLI holding it)
+
+# hardware mode (auto-detect the S3 port, or pass the path)
+HIL_GW_SERIAL=auto ./scripts/run_hil_dashboard.sh
+#   explicit:  HIL_GW_SERIAL=/dev/cu.usbmodem1101 ./scripts/run_hil_dashboard.sh
+```
+
+Expected startup log: `gateway hardware backend connected on /dev/cu.usbmodem1101`
+and `Gateway backend: Hardware`. Confirm with:
+
+```bash
+curl -s localhost:8090/api/v1/gateway/status
+# {"mode":"hardware","connected":true,"port":"/dev/cu.usbmodem1101"}
+```
+
+Then open `/gateway` (port 3001/3002): the badge reads **REAL HARDWARE**, command
+buttons hit the boards, and the live monitor streams `GWRESP …` lines. Without
+`HIL_GW_SERIAL` the same page runs against the simulator and the badge reads
+**SIMULATION MODE** — the Robot suite `tests/gateway_commands.robot` exercises that
+path with no hardware.
+
+### Notes / gotchas
+
+- Only one process can own the S3 USB port. Don't run `sim_node.py` or an espflash
+  monitor while the hardware-mode dashboard is up.
+- `CMD_DEAUTH_STA` maps to "deauth all" on hardware; the MAC field is ignored.
+- `CMD_REGISTER_NODE` is simulation-only (returns a note in hardware mode).
+- Wire protocol and command translation are host-tested: `cargo test -p protocol`
+  (gwlink round-trips) and `cargo test -p firmware-software-sim` (gateway model).
 
 ## Quick Start
 
@@ -184,19 +296,24 @@ Expect `ACTION_TRIGGERED` in control-plane logs for unique `BoolCmd(true)` frame
 ## Repository Layout
 
 ```
-protocol/           Shared TelemetryFrame, COBS/UART + ESP-NOW framing, ReplayGuard
-firmware/           esp32-tx-node, esp32s3-gateway
+protocol/           Shared TelemetryFrame, COBS/UART + ESP-NOW framing, gwlink, ReplayGuard
+firmware/           esp32-tx-node (now ESP32 gateway role), esp32s3-gateway (now S3 sim node),
+                    software-sim (host-side gateway model + helpers)
 edge-gateway/       UART -> ZMQ PUB
 control-plane/      ZMQ SUB -> rules -> sled
+hil-simulator/      software-sim sidecar + gateway backend (hardware/simulation)
+web/hil-dashboard/  Next.js dashboard (HIL + /gateway real/sim page)
 dsp-core/           inject_zmq.py, optional GNU Radio Docker image
 infrastructure/     Dockerfiles
+scripts/            flash_tx.sh, flash_gw.sh, sim_node.py, run_*.sh
 ```
 
 ## Protocol
 
 | Layer | Format |
 |-------|--------|
-| ESP-NOW | `[vendor_id=0x1A][postcard \|\| crc16_le]` |
+| ESP-NOW (telemetry) | `[vendor_id=0x1A][postcard \|\| crc16_le]` |
+| ESP-NOW (gateway link) | `[vendor_id=0x1B][postcard(GwMsg) \|\| crc16_le]` (`protocol::gwlink`) |
 | UART | `COBS(postcard \|\| crc16_le) + 0x00` |
 | ZMQ | Same COBS bytes as UART (without delimiter) |
 
@@ -205,8 +322,13 @@ infrastructure/     Dockerfiles
 ```bash
 # Host services (no ESP toolchain)
 cargo test --workspace --lib
+cargo test -p protocol                 # frame + gwlink wire round-trips
+cargo test -p firmware-software-sim    # gateway command model
 cargo test -p control-plane --test sim_pipeline
 cargo test -p hil-simulator --lib
+
+# Gateway command surface, end to end in simulation mode (Robot Framework)
+robot --outputdir /tmp/sdr-robot tests/gateway_commands.robot
 
 # Firmware (requires esp toolchain + source ~/export-esp.sh)
 ./scripts/flash_gw.sh /dev/cu.usbmodem1101 115200
