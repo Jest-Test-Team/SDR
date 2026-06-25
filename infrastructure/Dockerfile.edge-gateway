@@ -1,8 +1,12 @@
 FROM rust:1.85-bookworm AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libzmq3-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-COPY Cargo.toml Cargo.lock ./
-COPY protocol ./protocol
-COPY edge-gateway ./edge-gateway
+# Copy the whole workspace: Cargo must parse every workspace member manifest
+# (firmware/*, control-plane, hil-simulator, ...) even to build one package.
+COPY . .
 RUN cargo build --release -p edge-gateway
 
 FROM debian:bookworm-slim

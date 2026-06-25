@@ -74,6 +74,34 @@ body {
   gap: 0.75rem;
 }
 
+.header-path {
+  display: grid;
+  grid-template-columns: minmax(84px, max-content) auto;
+  gap: 0.15rem 0.65rem;
+  align-items: baseline;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #12151b;
+  min-width: 280px;
+}
+
+.header-path span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.header-path strong {
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.header-path small {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .language-picker {
   display: flex;
   align-items: center;

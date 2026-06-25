@@ -159,6 +159,8 @@ export function HilDashboard() {
   };
 
   const wf = snapshot?.waveforms;
+  const headerModeKey = config?.mode ?? "Unknown";
+  const headerTransportKey = sidecarTransport;
 
   return (
     <div className="dashboard" lang={locale}>
@@ -172,6 +174,11 @@ export function HilDashboard() {
           </p>
         </div>
         <div className="header-actions">
+          <div className="header-path" aria-live="polite">
+            <span>{t.headerPath.label}</span>
+            <strong>{t.headerPath.mode[headerModeKey]}</strong>
+            <small>{t.headerPath.transport[headerTransportKey]}</small>
+          </div>
           <label className="language-picker">
             {t.languageToggle}
             <select

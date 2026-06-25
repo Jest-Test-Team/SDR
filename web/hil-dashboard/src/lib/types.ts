@@ -23,6 +23,8 @@ export interface Kpis {
 
 export type SidecarTransport = "zmq" | "tls13_mtls";
 
+export type HeaderPathMode = SimConfig["mode"] | "Unknown";
+
 export interface TelemetryEvent {
   time: string;
   node_id: number;

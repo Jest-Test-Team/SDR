@@ -10,6 +10,11 @@ export type Dictionary = {
   languageToggle: string;
   title: string;
   subtitle: string;
+  headerPath: {
+    label: string;
+    mode: Record<"EspNow" | "BleAdvertisement" | "Ook433Mhz" | "SoftwareSim" | "Unknown", string>;
+    transport: Record<"zmq" | "tls13_mtls", string>;
+  };
   connected: string;
   connecting: string;
   backendFetchError: string;
@@ -131,6 +136,20 @@ export const dictionaries: Record<Locale, Dictionary> = {
     title: "ESP32-S3 to SDR HIL Simulator",
     subtitle:
       "Software simulation mode (ESP32-S3 + ESP32). Real SDR hardware mode is not enabled yet.",
+    headerPath: {
+      label: "Active path",
+      mode: {
+        EspNow: "ESP-NOW",
+        BleAdvertisement: "BLE Advertisement",
+        Ook433Mhz: "433 MHz OOK",
+        SoftwareSim: "Software Sim Protocol",
+        Unknown: "Unknown mode",
+      },
+      transport: {
+        zmq: "Local ZMQ",
+        tls13_mtls: "TLS 1.3 mTLS ingest",
+      },
+    },
     connected: "Live connection",
     connecting: "Connecting...",
     backendFetchError:
@@ -378,6 +397,20 @@ export const dictionaries: Record<Locale, Dictionary> = {
     languageToggle: "語言",
     title: "ESP32-S3 至 SDR HIL 模擬器",
     subtitle: "軟體模擬模式（ESP32-S3 + ESP32）。真實 SDR 硬體模式尚未啟用。",
+    headerPath: {
+      label: "目前路徑",
+      mode: {
+        EspNow: "ESP-NOW",
+        BleAdvertisement: "BLE Advertisement",
+        Ook433Mhz: "433 MHz OOK",
+        SoftwareSim: "Software Sim Protocol",
+        Unknown: "未知模式",
+      },
+      transport: {
+        zmq: "本機 ZMQ",
+        tls13_mtls: "TLS 1.3 mTLS ingest",
+      },
+    },
     connected: "即時連線",
     connecting: "連線中...",
     backendFetchError:

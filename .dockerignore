@@ -1,0 +1,12 @@
+target
+**/target
+.embuild
+.git
+.github
+data
+web/hil-dashboard/.next
+web/hil-dashboard/node_modules
+**/node_modules
+**/*.log
+.DS_Store
+**/.DS_Store

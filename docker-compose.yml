@@ -32,6 +32,32 @@ services:
       - "8081:8081"
     privileged: true
 
+  hil-simulator:
+    build:
+      context: .
+      dockerfile: infrastructure/Dockerfile.hil-simulator
+    ports:
+      - "8090:8090"
+    environment:
+      - RUST_LOG=info
+      - HIL_PORT=8090
+      - ZMQ_ENDPOINT=tcp://edge-gateway:5556
+
+  hil-dashboard:
+    build:
+      context: ./web/hil-dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - HIL_API_URL=http://hil-simulator:8090
+      - LIVE_CP_URL=http://control-plane:8080
+      - LIVE_EDGE_URL=http://edge-gateway:8081
+    depends_on:
+      - hil-simulator
+      - control-plane
+
   gnuradio-sim:
     build:
       context: ./dsp-core
