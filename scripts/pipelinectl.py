@@ -168,6 +168,16 @@ def main():
     ap.add_argument("--port", type=int, default=PORT)
     args = ap.parse_args()
 
+    try:
+        httpd = ThreadingHTTPServer((HOST, args.port), Handler)
+    except OSError as exc:
+        log(f"failed to bind http://{HOST}:{args.port}: {exc}")
+        try:
+            TOKEN_FILE.unlink()
+        except Exception:
+            pass
+        raise SystemExit(1) from exc
+
     TOKEN_FILE.write_text(TOKEN)
     os.chmod(TOKEN_FILE, 0o600)
     log(f"token written to {TOKEN_FILE} (0600)")
@@ -187,7 +197,6 @@ def main():
     if args.start:
         threading.Thread(target=start, args=(args.start,), daemon=True).start()
 
-    httpd = ThreadingHTTPServer((HOST, args.port), Handler)
     log(f"listening on http://{HOST}:{args.port}  (pipelines: {', '.join(PIPELINES)})")
     httpd.serve_forever()
 

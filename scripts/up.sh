@@ -106,6 +106,33 @@ wait_api() {
   printf ' — timeout\n'
 }
 
+wait_pipelinectl() {
+  local pid="$1"
+  local ctl_port="${PIPELINECTL_PORT:-8099}"
+  local token_file="${PIPELINECTL_TOKEN_FILE:-/tmp/sdr-pipelinectl.token}"
+  printf '   waiting for pipelinectl'
+  for _ in $(seq 1 30); do
+    if ! kill -0 "$pid" 2>/dev/null; then
+      printf ' — failed\n'
+      sed -n '1,80p' /tmp/sdr-pipelinectl.log >&2 2>/dev/null || true
+      return 1
+    fi
+    if [[ -s "$token_file" ]]; then
+      local token
+      token="$(cat "$token_file" 2>/dev/null || true)"
+      if curl -sf -H "Authorization: Bearer ${token}" \
+        "http://127.0.0.1:${ctl_port}/status" >/dev/null 2>&1; then
+        printf ' — ready\n'
+        return 0
+      fi
+    fi
+    printf '.'; sleep 1
+  done
+  printf ' — timeout\n'
+  sed -n '1,80p' /tmp/sdr-pipelinectl.log >&2 2>/dev/null || true
+  return 1
+}
+
 start_dashboard() {
   cd "$ROOT/web/hil-dashboard"
   export NEXT_PUBLIC_HIL_WS_URL="ws://127.0.0.1:${HIL_PORT}/ws/live"
@@ -121,7 +148,9 @@ if [[ "$CONTROL" -eq 1 ]]; then
   INIT_PIPE="$PIPELINE"; [[ -n "$GW_SERIAL" ]] || INIT_PIPE="sim"
   note "starting pipelinectl supervisor (initial pipeline: $INIT_PIPE)"
   ./scripts/pipelinectl.py --start "$INIT_PIPE" >/tmp/sdr-pipelinectl.log 2>&1 &
-  PIDS+=($!)
+  ctl_pid=$!
+  PIDS+=("$ctl_pid")
+  wait_pipelinectl "$ctl_pid" || exit 1
   wait_api
   banner "CONTROLLED mode — the nav ‘⇄’ button now switches pipelines live"
   echo "   open http://localhost:${DASH_PORT}  (telemetry)  or  /gateway  (provisioning)"
