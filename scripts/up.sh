@@ -17,6 +17,8 @@
 #       frames — a DIFFERENT firmware build than the Secure-Gateway topology.
 #
 # Common flags:
+#   --control    run the pipelinectl supervisor so the dashboard ‘⇄’ button can
+#                restart the backend into the other pipeline live (no terminal)
 #   --sim        force hil-simulator simulation (gateway mode, no boards)
 #   --flash      flash both boards (Secure-Gateway topology) before up
 #   --rebuild    force a clean FE/BE rebuild
@@ -37,6 +39,7 @@ GW_SERIAL="auto"
 DO_FLASH=0
 REBUILD=0
 DOCKER=0
+CONTROL=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -46,7 +49,8 @@ while [[ $# -gt 0 ]]; do
     --flash)     DO_FLASH=1; shift ;;
     --rebuild)   REBUILD=1; shift ;;
     --docker)    DOCKER=1; shift ;;
-    -h|--help)   sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --control)   CONTROL=1; shift ;;
+    -h|--help)   sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 2 ;;
   esac
 done
@@ -67,9 +71,11 @@ PIDS=()
 cleanup() {
   note "shutting down"
   for p in ${PIDS[@]+"${PIDS[@]}"}; do kill "$p" 2>/dev/null || true; done
-  # run_local.sh starts its own children; make sure they go too
+  # run_local.sh / pipelinectl start their own children; make sure they go too
+  pkill -f 'scripts/pipelinectl.py' 2>/dev/null || true
   pkill -f 'target/release/edge-gateway' 2>/dev/null || true
   pkill -f 'target/release/control-plane' 2>/dev/null || true
+  pkill -f 'target/release/hil-simulator' 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 
@@ -110,7 +116,19 @@ start_dashboard() {
   if [[ "$REBUILD" -eq 1 && -d .next ]]; then npm run start -- -p "$DASH_PORT"; else npm run dev; fi
 }
 
-if [[ "$PIPELINE" == "telemetry" ]]; then
+if [[ "$CONTROL" -eq 1 ]]; then
+  # ---- CONTROLLED: pipelinectl supervises the backend; button switches live --
+  INIT_PIPE="$PIPELINE"; [[ -n "$GW_SERIAL" ]] || INIT_PIPE="sim"
+  note "starting pipelinectl supervisor (initial pipeline: $INIT_PIPE)"
+  ./scripts/pipelinectl.py --start "$INIT_PIPE" >/tmp/sdr-pipelinectl.log 2>&1 &
+  PIDS+=($!)
+  wait_api
+  banner "CONTROLLED mode — the nav ‘⇄’ button now switches pipelines live"
+  echo "   open http://localhost:${DASH_PORT}  (telemetry)  or  /gateway  (provisioning)"
+  echo "   logs: /tmp/sdr-pipelinectl.log  /tmp/sdr-hil-simulator.log  /tmp/sdr-run-local.log"
+  start_dashboard
+
+elif [[ "$PIPELINE" == "telemetry" ]]; then
   # ---- LIVE TELEMETRY: edge-gateway + control-plane + hil-simulator(SIM) ----
   note "building binaries (release)"
   cargo build --release -p edge-gateway -p control-plane -p hil-simulator

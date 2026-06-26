@@ -253,6 +253,21 @@ ESP32-S3 USB port. `up.sh` picks one and tells you which dashboard page is live:
 ./scripts/up.sh --docker   # build+run FE/BE as Docker images (board-less)
 ```
 
+#### Live pipeline switching (`--control`)
+
+```bash
+./scripts/up.sh --control            # gateway pipeline + live-switch button
+./scripts/up.sh --control --telemetry# start on the telemetry pipeline instead
+```
+
+This launches `scripts/pipelinectl.py`, a tiny **local, privileged** supervisor
+that the dashboard's nav **`⇄` button** calls to restart the backend into the
+other pipeline — no terminal needed. Security: it binds `127.0.0.1` only, requires
+a bearer token (generated at startup, written to a `0600` file the dashboard reads
+server-side), and accepts only a fixed action allowlist (`gateway` / `telemetry` /
+`sim` / `stop`) — no shell strings. Without `--control`, the `⇄` button degrades to
+plain navigation and shows the `up.sh` command to run by hand.
+
 In **gateway** mode the main `/` live-telemetry page reads as offline — that's
 expected; use `--telemetry` for that page. Note the two pipelines also need
 **different S3 firmware** (Secure-Gateway node vs telemetry bridge), so switching

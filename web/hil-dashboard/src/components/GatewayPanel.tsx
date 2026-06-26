@@ -152,105 +152,6 @@ export function GatewayPanel() {
       </div>
 
       <div className="panel">
-        <h3>閘道指令 / Gateway Commands</h3>
-        <div className="controls">
-          <button
-            className="trigger-btn"
-            type="button"
-            disabled={busy}
-            onClick={() => run({ command: "net_toggle_downstream" })}
-          >
-            CMD_NET_TOGGLE_DOWNSTREAM
-          </button>
-          <button
-            className="trigger-btn secondary"
-            type="button"
-            disabled={busy}
-            onClick={() => run({ command: "sys_health" })}
-          >
-            CMD_SYS_HEALTH
-          </button>
-          <button
-            className="trigger-btn secondary"
-            type="button"
-            disabled={busy}
-            onClick={() => run({ command: "sta_list" })}
-          >
-            CMD_STA_LIST
-          </button>
-        </div>
-
-        <div className="controls" style={{ marginTop: "1rem" }}>
-          <label>
-            <span>OID</span>
-            <input className="mono" value={oid} onChange={(e) => setOid(e.target.value)} />
-          </label>
-          <label>
-            <span>Value</span>
-            <input className="mono" value={value} onChange={(e) => setValue(e.target.value)} />
-          </label>
-          <div className="controls">
-            <button
-              className="trigger-btn"
-              type="button"
-              disabled={busy}
-              onClick={() => run({ command: "snmp_set", oid, value })}
-            >
-              CMD_SNMP_SET
-            </button>
-            <button
-              className="trigger-btn secondary"
-              type="button"
-              disabled={busy}
-              onClick={() => run({ command: "snmp_get", oid })}
-            >
-              CMD_SNMP_GET
-            </button>
-          </div>
-        </div>
-
-        <div className="controls" style={{ marginTop: "1rem" }}>
-          <label>
-            <span>MAC</span>
-            <input className="mono" value={mac} onChange={(e) => setMac(e.target.value)} />
-          </label>
-          <label>
-            <span>IP</span>
-            <input className="mono" value={ip} onChange={(e) => setIp(e.target.value)} />
-          </label>
-          <div className="controls">
-            <button
-              className="trigger-btn"
-              type="button"
-              disabled={busy}
-              onClick={() => run({ command: "register_node", mac, ip })}
-              title="Simulation-only: no on-device ESP-NOW equivalent"
-            >
-              CMD_REGISTER_NODE (sim)
-            </button>
-            <button
-              className="trigger-btn secondary"
-              type="button"
-              disabled={busy}
-              onClick={() => run({ command: "deauth_sta", mac })}
-            >
-              CMD_DEAUTH_STA
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {lastResponse && (
-        <div className="panel">
-          <h3>最後回應 / Last Response</h3>
-          <p className={lastResponse.ok ? "" : "backend-error"}>{lastResponse.message}</p>
-          {lastResponse.snmp && (
-            <pre className="mono">{JSON.stringify(lastResponse.snmp, null, 2)}</pre>
-          )}
-        </div>
-      )}
-
-      <div className="panel">
         <h3>裝置佈建 / Device Provisioning</h3>
         <p className="subtitle">
           enroll（簽發身份與憑證）→ claim（啟用上線）→ rotate（輪替憑證）→ revoke（撤銷下線）
@@ -358,6 +259,107 @@ export function GatewayPanel() {
           </tbody>
         </table>
       </div>
+
+      <div className="panel">
+        <h3>閘道指令 / Gateway Commands</h3>
+        <div className="controls">
+          <button
+            className="trigger-btn"
+            type="button"
+            disabled={busy}
+            onClick={() => run({ command: "net_toggle_downstream" })}
+          >
+            CMD_NET_TOGGLE_DOWNSTREAM
+          </button>
+          <button
+            className="trigger-btn secondary"
+            type="button"
+            disabled={busy}
+            onClick={() => run({ command: "sys_health" })}
+          >
+            CMD_SYS_HEALTH
+          </button>
+          <button
+            className="trigger-btn secondary"
+            type="button"
+            disabled={busy}
+            onClick={() => run({ command: "sta_list" })}
+          >
+            CMD_STA_LIST
+          </button>
+        </div>
+
+        <div className="controls" style={{ marginTop: "1rem" }}>
+          <label>
+            <span>OID</span>
+            <input className="mono" value={oid} onChange={(e) => setOid(e.target.value)} />
+          </label>
+          <label>
+            <span>Value</span>
+            <input className="mono" value={value} onChange={(e) => setValue(e.target.value)} />
+          </label>
+          <div className="controls">
+            <button
+              className="trigger-btn"
+              type="button"
+              disabled={busy}
+              onClick={() => run({ command: "snmp_set", oid, value })}
+            >
+              CMD_SNMP_SET
+            </button>
+            <button
+              className="trigger-btn secondary"
+              type="button"
+              disabled={busy}
+              onClick={() => run({ command: "snmp_get", oid })}
+            >
+              CMD_SNMP_GET
+            </button>
+          </div>
+        </div>
+
+        <div className="controls" style={{ marginTop: "1rem" }}>
+          <label>
+            <span>MAC</span>
+            <input className="mono" value={mac} onChange={(e) => setMac(e.target.value)} />
+          </label>
+          <label>
+            <span>IP</span>
+            <input className="mono" value={ip} onChange={(e) => setIp(e.target.value)} />
+          </label>
+          <div className="controls">
+            <button
+              className="trigger-btn"
+              type="button"
+              disabled={busy}
+              onClick={() => run({ command: "register_node", mac, ip })}
+              title="Simulation-only: no on-device ESP-NOW equivalent"
+            >
+              CMD_REGISTER_NODE (sim)
+            </button>
+            <button
+              className="trigger-btn secondary"
+              type="button"
+              disabled={busy}
+              onClick={() => run({ command: "deauth_sta", mac })}
+            >
+              CMD_DEAUTH_STA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {lastResponse && (
+        <div className="panel">
+          <h3>最後回應 / Last Response</h3>
+          <p className={lastResponse.ok ? "" : "backend-error"}>{lastResponse.message}</p>
+          {lastResponse.snmp && (
+            <pre className="mono">{JSON.stringify(lastResponse.snmp, null, 2)}</pre>
+          )}
+        </div>
+      )}
+
+      
 
       <div className="panel">
         <h3>模擬 MIB / Simulated MIB</h3>
