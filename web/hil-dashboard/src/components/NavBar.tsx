@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { PipelineSwitch } from "./PipelineSwitch";
 
 const LINKS: { href: string; label: string }[] = [
   { href: "/", label: "HIL 模擬器 / HIL Simulator" },
@@ -32,6 +33,7 @@ export function NavBar() {
           );
         })}
       </div>
+      <PipelineSwitch />
     </nav>
   );
 }

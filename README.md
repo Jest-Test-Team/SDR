@@ -236,19 +236,28 @@ path with no hardware.
 
 ### One command (build-if-needed + up, boards in the loop)
 
+There are **two board pipelines** and they can't run at once — both need the one
+ESP32-S3 USB port. `up.sh` picks one and tells you which dashboard page is live:
+
 ```bash
-./scripts/up.sh            # builds only what changed, starts control-plane +
-                           # hil-simulator (HARDWARE mode, auto-detects the S3
-                           # board) + dashboard, then opens http://localhost:3001
-./scripts/up.sh --sim      # no boards (simulation)
-./scripts/up.sh --flash    # flash both boards first, then up
+# GATEWAY / provisioning pipeline (default)  →  http://localhost:3001/gateway
+./scripts/up.sh            # hil-simulator HARDWARE mode owns the S3, ESP-NOW to ESP32 gateway
+./scripts/up.sh --sim      # same page, no boards (simulation)
+./scripts/up.sh --flash    # flash both boards (Secure-Gateway topology) first
+
+# LIVE TELEMETRY pipeline                     →  http://localhost:3001
+./scripts/up.sh --telemetry  # edge-gateway reads S3 → ZMQ → control-plane → main page
+
+# Other flags
 ./scripts/up.sh --rebuild  # force a clean FE/BE rebuild
 ./scripts/up.sh --docker   # build+run FE/BE as Docker images (board-less)
 ```
 
-Ctrl+C tears the whole stack down. Hardware mode needs the ESP toolchain
-(`source ~/export-esp.sh`) and a free S3 usbmodem port (close espflash monitors
-first). The manual steps below are for when you need finer control.
+In **gateway** mode the main `/` live-telemetry page reads as offline — that's
+expected; use `--telemetry` for that page. Note the two pipelines also need
+**different S3 firmware** (Secure-Gateway node vs telemetry bridge), so switching
+pipelines may require a reflash. Ctrl+C tears the whole stack down. Hardware needs
+the ESP toolchain (`source ~/export-esp.sh`) and a free S3 usbmodem port.
 
 ### Prerequisites
 
