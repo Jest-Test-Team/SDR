@@ -218,6 +218,7 @@ fn default_hw_snapshot() -> GatewaySnapshot {
         downstream_online: true,
         free_heap_bytes: 0,
         heap_total_bytes: HEAP_TOTAL_BYTES,
+        station_count: 0,
         command_count: 0,
         oids: Vec::new(),
         nodes: Vec::new(),
@@ -234,6 +235,7 @@ fn command_to_line(command: &GatewayCommand) -> Option<String> {
         GatewayCommand::SnmpGet { oid } => Some(format!("GW,SNMP_GET,{oid}")),
         GatewayCommand::DeauthSta { .. } => Some("GW,DEAUTH".to_string()),
         GatewayCommand::SysHealth => Some("GW,HEALTH".to_string()),
+        GatewayCommand::StaList => Some("GW,STALIST".to_string()),
         // Provisioning is a real on-device operation: the ESP32 gateway keeps the
         // device registry and replies with `GWRESP PROVISION ...`.
         GatewayCommand::EnrollDevice { device_id, mac } => {
@@ -307,6 +309,15 @@ async fn apply_line(snap: &Arc<RwLock<GatewaySnapshot>>, line: &str) {
                 if let Some(device_id) = kv.get("device_id") {
                     upsert_device(&mut s, device_id, &kv);
                 }
+            }
+            "STALIST" => {
+                if let Some(count) = kv_u32(&kv, "count") {
+                    s.station_count = count;
+                }
+            }
+            "DEAUTH" => {
+                // Hardware kicks all downstream stations.
+                s.station_count = 0;
             }
             _ => {}
         }

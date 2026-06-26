@@ -108,6 +108,7 @@ export interface GatewaySnapshot {
   downstream_online: boolean;
   free_heap_bytes: number;
   heap_total_bytes: number;
+  station_count: number;
   command_count: number;
   oids: OidEntry[];
   nodes: NodeInfo[];
@@ -146,6 +147,7 @@ export type GatewayCommand =
   | { command: "snmp_get"; oid: string }
   | { command: "deauth_sta"; mac: string }
   | { command: "sys_health" }
+  | { command: "sta_list" }
   | { command: "register_node"; mac: string; ip: string }
   | { command: "enroll_device"; device_id: string; mac: string }
   | { command: "claim_device"; device_id: string }

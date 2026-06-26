@@ -20,6 +20,7 @@ pub const CMD_SNMP_SET: &str = "CMD_SNMP_SET";
 pub const CMD_SNMP_GET: &str = "CMD_SNMP_GET";
 pub const CMD_DEAUTH_STA: &str = "CMD_DEAUTH_STA";
 pub const CMD_SYS_HEALTH: &str = "CMD_SYS_HEALTH";
+pub const CMD_STA_LIST: &str = "CMD_STA_LIST";
 pub const CMD_REGISTER_NODE: &str = "CMD_REGISTER_NODE";
 pub const CMD_ENROLL_DEVICE: &str = "CMD_ENROLL_DEVICE";
 pub const CMD_CLAIM_DEVICE: &str = "CMD_CLAIM_DEVICE";
@@ -115,6 +116,8 @@ pub enum GatewayCommand {
     DeauthSta { mac: String },
     /// CMD_SYS_HEALTH: report gateway free heap / uptime / link state.
     SysHealth,
+    /// CMD_STA_LIST: report the number of connected downstream stations.
+    StaList,
     /// CMD_REGISTER_NODE: simulate a downstream endpoint joining the AP.
     RegisterNode { mac: String, ip: String },
     /// CMD_ENROLL_DEVICE: create a device identity and issue its first credential.
@@ -135,6 +138,7 @@ impl GatewayCommand {
             GatewayCommand::SnmpGet { .. } => CMD_SNMP_GET,
             GatewayCommand::DeauthSta { .. } => CMD_DEAUTH_STA,
             GatewayCommand::SysHealth => CMD_SYS_HEALTH,
+            GatewayCommand::StaList => CMD_STA_LIST,
             GatewayCommand::RegisterNode { .. } => CMD_REGISTER_NODE,
             GatewayCommand::EnrollDevice { .. } => CMD_ENROLL_DEVICE,
             GatewayCommand::ClaimDevice { .. } => CMD_CLAIM_DEVICE,
@@ -162,6 +166,7 @@ pub struct GatewaySnapshot {
     pub downstream_online: bool,
     pub free_heap_bytes: u32,
     pub heap_total_bytes: u32,
+    pub station_count: u32,
     pub command_count: u32,
     pub oids: Vec<OidEntry>,
     pub nodes: Vec<NodeInfo>,
@@ -242,6 +247,7 @@ impl GatewaySim {
             downstream_online: self.downstream_online,
             free_heap_bytes: self.free_heap_bytes,
             heap_total_bytes: HEAP_TOTAL_BYTES,
+            station_count: self.online_station_count(),
             command_count: self.command_count,
             oids: self
                 .oids
@@ -272,6 +278,14 @@ impl GatewaySim {
 
     fn device_index(&self, device_id: &str) -> Option<usize> {
         self.devices.iter().position(|d| d.device_id == device_id)
+    }
+
+    /// Number of connected downstream stations (mirrors `GW,STALIST` on hardware).
+    fn online_station_count(&self) -> u32 {
+        if !self.downstream_online {
+            return 0;
+        }
+        self.nodes.iter().filter(|n| n.online).count() as u32
     }
 
     /// Apply a command and return the response plus updated snapshot.
@@ -356,6 +370,11 @@ impl GatewaySim {
                     self.downstream_online,
                     self.nodes.len()
                 ),
+                None,
+            ),
+            GatewayCommand::StaList => (
+                true,
+                format!("stations={}", self.online_station_count()),
                 None,
             ),
             GatewayCommand::RegisterNode { mac, ip } => {
@@ -632,6 +651,18 @@ mod tests {
         assert!(!gw.apply(&GatewayCommand::RotateCredential {
             device_id: "dev-1".to_string(),
         }).ok);
+    }
+
+    #[test]
+    fn sta_list_reports_online_stations() {
+        let mut gw = GatewaySim::new();
+        let resp = gw.apply(&GatewayCommand::StaList);
+        assert!(resp.ok);
+        assert_eq!(resp.snapshot.station_count, 1);
+        assert!(resp.message.contains("stations=1"));
+        // Severing the downstream AP drops the station count to zero.
+        gw.apply(&GatewayCommand::NetToggleDownstream);
+        assert_eq!(gw.snapshot().station_count, 0);
     }
 
     #[test]

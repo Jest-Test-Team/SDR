@@ -122,6 +122,11 @@ export function GatewayPanel() {
           <p>{snap ? `${snap.free_heap_bytes} / ${snap.heap_total_bytes} bytes` : ""}</p>
         </div>
         <div className="kpi">
+          <div className="kpi-label">連線站台 / Stations</div>
+          <div className="kpi-value">{snap?.station_count ?? 0}</div>
+          <p>下行 AP 上的連線數（GW,STALIST）</p>
+        </div>
+        <div className="kpi">
           <div className="kpi-label">指令數 / Commands</div>
           <div className="kpi-value">{snap?.command_count ?? 0}</div>
           <p>已處理的閘道指令</p>
@@ -164,6 +169,14 @@ export function GatewayPanel() {
             onClick={() => run({ command: "sys_health" })}
           >
             CMD_SYS_HEALTH
+          </button>
+          <button
+            className="trigger-btn secondary"
+            type="button"
+            disabled={busy}
+            onClick={() => run({ command: "sta_list" })}
+          >
+            CMD_STA_LIST
           </button>
         </div>
 
@@ -211,8 +224,9 @@ export function GatewayPanel() {
               type="button"
               disabled={busy}
               onClick={() => run({ command: "register_node", mac, ip })}
+              title="Simulation-only: no on-device ESP-NOW equivalent"
             >
-              CMD_REGISTER_NODE
+              CMD_REGISTER_NODE (sim)
             </button>
             <button
               className="trigger-btn secondary"
