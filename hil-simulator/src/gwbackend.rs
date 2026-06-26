@@ -16,7 +16,8 @@ use tokio::sync::{Mutex, Notify, RwLock, broadcast};
 use tokio::time::timeout;
 
 use crate::sim::gateway::{
-    GatewayCommand, GatewayResponse, GatewaySim, GatewaySnapshot, OidEntry, SnmpResponse, WifiMode,
+    DeviceIdentity, GatewayCommand, GatewayResponse, GatewaySim, GatewaySnapshot, OidEntry,
+    ProvisioningState, SnmpResponse, WifiMode,
 };
 
 const HEAP_TOTAL_BYTES: u32 = 327_680;
@@ -233,13 +234,16 @@ fn command_to_line(command: &GatewayCommand) -> Option<String> {
         GatewayCommand::SnmpGet { oid } => Some(format!("GW,SNMP_GET,{oid}")),
         GatewayCommand::DeauthSta { .. } => Some("GW,DEAUTH".to_string()),
         GatewayCommand::SysHealth => Some("GW,HEALTH".to_string()),
-        // No on-device equivalent: registration and provisioning are
-        // simulation / control-plane concepts, not raw ESP-NOW operations.
-        GatewayCommand::RegisterNode { .. }
-        | GatewayCommand::EnrollDevice { .. }
-        | GatewayCommand::ClaimDevice { .. }
-        | GatewayCommand::RotateCredential { .. }
-        | GatewayCommand::RevokeDevice { .. } => None,
+        // Provisioning is a real on-device operation: the ESP32 gateway keeps the
+        // device registry and replies with `GWRESP PROVISION ...`.
+        GatewayCommand::EnrollDevice { device_id, mac } => {
+            Some(format!("GW,ENROLL,{device_id},{mac}"))
+        }
+        GatewayCommand::ClaimDevice { device_id } => Some(format!("GW,CLAIM,{device_id}")),
+        GatewayCommand::RotateCredential { device_id } => Some(format!("GW,ROTATE,{device_id}")),
+        GatewayCommand::RevokeDevice { device_id } => Some(format!("GW,REVOKE,{device_id}")),
+        // No on-device equivalent: registration is a pure simulation concept.
+        GatewayCommand::RegisterNode { .. } => None,
     }
 }
 
@@ -299,6 +303,11 @@ async fn apply_line(snap: &Arc<RwLock<GatewaySnapshot>>, line: &str) {
                     }
                 }
             }
+            "PROVISION" => {
+                if let Some(device_id) = kv.get("device_id") {
+                    upsert_device(&mut s, device_id, &kv);
+                }
+            }
             _ => {}
         }
     }
@@ -325,6 +334,43 @@ fn upsert_oid(s: &mut GatewaySnapshot, oid: &str, value: &str) {
         s.oids.push(OidEntry {
             oid: oid.to_string(),
             value: value.to_string(),
+        });
+    }
+}
+
+fn upsert_device(
+    s: &mut GatewaySnapshot,
+    device_id: &str,
+    kv: &std::collections::HashMap<String, String>,
+) {
+    let state = match kv.get("state").map(String::as_str) {
+        Some("active") => ProvisioningState::Active,
+        Some("revoked") => ProvisioningState::Revoked,
+        Some("pending") => ProvisioningState::Pending,
+        // "unknown" (or anything else) is not a real identity — don't record it,
+        // so a rejected op (e.g. claim of a non-existent device) leaves the table
+        // unchanged.
+        _ => return,
+    };
+    let fingerprint = kv
+        .get("fingerprint")
+        .filter(|f| f.as_str() != "<none>")
+        .cloned()
+        .unwrap_or_default();
+    let version = kv_u32(kv, "version").unwrap_or(0);
+    if let Some(dev) = s.devices.iter_mut().find(|d| d.device_id == device_id) {
+        dev.state = state;
+        if !fingerprint.is_empty() {
+            dev.credential_fingerprint = fingerprint;
+        }
+        dev.credential_version = version;
+    } else {
+        s.devices.push(DeviceIdentity {
+            device_id: device_id.to_string(),
+            mac: kv.get("mac").cloned().unwrap_or_default(),
+            state,
+            credential_fingerprint: fingerprint,
+            credential_version: version,
         });
     }
 }

@@ -102,9 +102,20 @@ fn reply(esp_now: &EspNow<'_>, dst: [u8; 6], msg: &GwMsg) {
     }
 }
 
+/// On-device provisioning record for a downstream device identity.
+struct DeviceRec {
+    #[allow(dead_code)]
+    mac: String,
+    state: &'static str,
+    fingerprint: String,
+    version: u32,
+}
+
 struct Gateway {
     downstream_online: bool,
     oids: HashMap<String, String>,
+    devices: HashMap<String, DeviceRec>,
+    credential_counter: u32,
 }
 
 impl Gateway {
@@ -115,6 +126,41 @@ impl Gateway {
         Self {
             downstream_online: true,
             oids,
+            devices: HashMap::new(),
+            credential_counter: 0,
+        }
+    }
+
+    /// Issue a deterministic credential fingerprint (FNV-1a over device id +
+    /// issuance counter). Stand-in for real key/cert material; matches the
+    /// host-side `GatewaySim` scheme so on-device and sim outputs are comparable.
+    fn issue_credential(&mut self, device_id: &str) -> String {
+        self.credential_counter += 1;
+        let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+        for byte in device_id.bytes().chain(self.credential_counter.to_le_bytes()) {
+            hash ^= byte as u64;
+            hash = hash.wrapping_mul(0x0100_0000_01b3);
+        }
+        format!("cred-{hash:016x}")
+    }
+
+    /// Build a `ProvisionResp` for `device_id` from current registry state.
+    fn provision_resp(&self, device_id: &str, ok: bool) -> GwMsg {
+        match self.devices.get(device_id) {
+            Some(rec) => GwMsg::ProvisionResp {
+                device_id: device_id.to_string(),
+                state: rec.state.to_string(),
+                fingerprint: rec.fingerprint.clone(),
+                version: rec.version,
+                ok,
+            },
+            None => GwMsg::ProvisionResp {
+                device_id: device_id.to_string(),
+                state: "unknown".to_string(),
+                fingerprint: String::new(),
+                version: 0,
+                ok: false,
+            },
         }
     }
 
@@ -227,6 +273,60 @@ impl Gateway {
                 };
                 let ok = value.is_some();
                 GwMsg::SnmpResp { oid, value, ok }
+            }
+            GwMsg::EnrollReq { device_id, mac } => {
+                if self.devices.contains_key(&device_id) {
+                    self.provision_resp(&device_id, false)
+                } else {
+                    let fingerprint = self.issue_credential(&device_id);
+                    self.devices.insert(
+                        device_id.clone(),
+                        DeviceRec {
+                            mac,
+                            state: "pending",
+                            fingerprint,
+                            version: 1,
+                        },
+                    );
+                    self.provision_resp(&device_id, true)
+                }
+            }
+            GwMsg::ClaimReq { device_id } => {
+                let ok = match self.devices.get_mut(&device_id) {
+                    Some(rec) if rec.state == "pending" => {
+                        rec.state = "active";
+                        true
+                    }
+                    _ => false,
+                };
+                self.provision_resp(&device_id, ok)
+            }
+            GwMsg::RotateReq { device_id } => {
+                let allowed = matches!(
+                    self.devices.get(&device_id),
+                    Some(rec) if rec.state != "revoked"
+                );
+                let ok = if allowed {
+                    let fingerprint = self.issue_credential(&device_id);
+                    if let Some(rec) = self.devices.get_mut(&device_id) {
+                        rec.fingerprint = fingerprint;
+                        rec.version += 1;
+                    }
+                    true
+                } else {
+                    false
+                };
+                self.provision_resp(&device_id, ok)
+            }
+            GwMsg::RevokeReq { device_id } => {
+                let ok = match self.devices.get_mut(&device_id) {
+                    Some(rec) if rec.state != "revoked" => {
+                        rec.state = "revoked";
+                        true
+                    }
+                    _ => false,
+                };
+                self.provision_resp(&device_id, ok)
             }
             // Responses are not expected inbound on the gateway.
             other => {

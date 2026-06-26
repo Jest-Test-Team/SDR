@@ -164,6 +164,23 @@ fn handle_command(
                 },
             );
         }
+        (Some("GW"), Some("ENROLL")) => {
+            let device_id = fields.next().unwrap_or("").to_string();
+            let mac = fields.next().unwrap_or("").to_string();
+            send_gw(esp_now, gateway_mac, &GwMsg::EnrollReq { device_id, mac });
+        }
+        (Some("GW"), Some("CLAIM")) => {
+            let device_id = fields.next().unwrap_or("").to_string();
+            send_gw(esp_now, gateway_mac, &GwMsg::ClaimReq { device_id });
+        }
+        (Some("GW"), Some("ROTATE")) => {
+            let device_id = fields.next().unwrap_or("").to_string();
+            send_gw(esp_now, gateway_mac, &GwMsg::RotateReq { device_id });
+        }
+        (Some("GW"), Some("REVOKE")) => {
+            let device_id = fields.next().unwrap_or("").to_string();
+            send_gw(esp_now, gateway_mac, &GwMsg::RevokeReq { device_id });
+        }
         (Some("SIM"), Some("SEND")) => {
             let value = matches!(fields.next(), Some("1") | Some("true"));
             send_sim(esp_now, gateway_mac, value);
@@ -204,6 +221,20 @@ fn format_inbound(data: &[u8]) -> String {
             "GWRESP SNMP oid={} value={} ok={}",
             oid,
             value.as_deref().unwrap_or("<none>"),
+            ok
+        ),
+        Ok(GwMsg::ProvisionResp {
+            device_id,
+            state,
+            fingerprint,
+            version,
+            ok,
+        }) => format!(
+            "GWRESP PROVISION device_id={} state={} fingerprint={} version={} ok={}",
+            device_id,
+            state,
+            if fingerprint.is_empty() { "<none>" } else { &fingerprint },
+            version,
             ok
         ),
         Ok(other) => format!("GWRESP other={:?}", other),

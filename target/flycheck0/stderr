@@ -1,5 +1,5 @@
-   0.677298708s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/Check { test: false }/TargetInner { name: "esp32-tx-node", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/src/main.rs", Edition2024) }
-   0.677345000s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-8af1a08aa520b808/bin-esp32-tx-node`
+   0.853453291s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/Check { test: false }/TargetInner { name: "esp32-tx-node", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/src/main.rs", Edition2024) }
+   0.853498458s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-8af1a08aa520b808/bin-esp32-tx-node`
 
 Caused by:
     No such file or directory (os error 2)
@@ -22,8 +22,8 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.696540750s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="esp_idf_svc"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-svc v0.52.1/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_svc", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-svc-0.52.1/src/lib.rs", Edition2021) }
-   0.696572583s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="esp_idf_svc"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-svc-e9091368a2e5e34a/lib-esp_idf_svc`
+   0.868327166s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="esp_idf_svc"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-svc v0.52.1/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_svc", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-svc-0.52.1/src/lib.rs", Edition2021) }
+   0.868362958s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="esp_idf_svc"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-svc-e9091368a2e5e34a/lib-esp_idf_svc`
 
 Caused by:
     No such file or directory (os error 2)
@@ -47,8 +47,8 @@ Stack backtrace:
   15: std::rt::lang_start::<()>::{closure#0}
   16: std::rt::lang_start_internal
   17: _main
-   0.700131292s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="esp_idf_hal"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-hal v0.46.2/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_hal", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-hal-0.46.2/src/lib.rs", Edition2021) }
-   0.700139333s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="esp_idf_hal"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-hal-c0a9be446eb4c9fe/lib-esp_idf_hal`
+   0.871889875s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="esp_idf_hal"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-hal v0.46.2/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_hal", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-hal-0.46.2/src/lib.rs", Edition2021) }
+   0.871900166s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="esp_idf_hal"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-hal-c0a9be446eb4c9fe/lib-esp_idf_hal`
 
 Caused by:
     No such file or directory (os error 2)
@@ -73,8 +73,8 @@ Stack backtrace:
   16: std::rt::lang_start::<()>::{closure#0}
   17: std::rt::lang_start_internal
   18: _main
-   0.702778958s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-hal v0.46.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-hal-0.46.2/build.rs", Edition2021) }
-   0.702786833s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-hal-97ecd0cebf160744/run-build-script-build-script-build`
+   0.874596625s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-hal v0.46.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-hal-0.46.2/build.rs", Edition2021) }
+   0.874606416s  INFO prepare_target{force=false package_id=esp-idf-hal v0.46.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-hal-97ecd0cebf160744/run-build-script-build-script-build`
 
 Caused by:
     No such file or directory (os error 2)
@@ -101,8 +101,8 @@ Stack backtrace:
   18: std::rt::lang_start::<()>::{closure#0}
   19: std::rt::lang_start_internal
   20: _main
-   0.717006125s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-sys v0.37.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-sys-0.37.2/build/build.rs", Edition2021) }
-   0.717020750s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-sys-14ae79d739750284/run-build-script-build-script-build`
+   0.889242750s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-sys v0.37.2/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-sys-0.37.2/build/build.rs", Edition2021) }
+   0.889259458s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-sys-14ae79d739750284/run-build-script-build-script-build`
 
 Caused by:
     No such file or directory (os error 2)
@@ -130,8 +130,8 @@ Stack backtrace:
   19: std::rt::lang_start::<()>::{closure#0}
   20: std::rt::lang_start_internal
   21: _main
-   0.718783500s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="esp_idf_sys"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-sys v0.37.2/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_sys", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-sys-0.37.2/src/lib.rs", Edition2021) }
-   0.718792417s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="esp_idf_sys"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-sys-b4614520c39469a6/lib-esp_idf_sys`
+   0.891055958s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="esp_idf_sys"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-sys v0.37.2/Check { test: false }/TargetInner { harness: false, ..: lib_target("esp_idf_sys", ["lib"], "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-sys-0.37.2/src/lib.rs", Edition2021) }
+   0.891064958s  INFO prepare_target{force=false package_id=esp-idf-sys v0.37.2 target="esp_idf_sys"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-sys-b4614520c39469a6/lib-esp_idf_sys`
 
 Caused by:
     No such file or directory (os error 2)
@@ -157,8 +157,8 @@ Stack backtrace:
   17: std::rt::lang_start::<()>::{closure#0}
   18: std::rt::lang_start_internal
   19: _main
-   0.721218792s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-svc v0.52.1/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-svc-0.52.1/build.rs", Edition2021) }
-   0.721225500s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-svc-8108a41cb2b9d993/run-build-script-build-script-build`
+   0.893473875s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp-idf-svc v0.52.1/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/esp-idf-svc-0.52.1/build.rs", Edition2021) }
+   0.893480541s  INFO prepare_target{force=false package_id=esp-idf-svc v0.52.1 target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp-idf-svc-8108a41cb2b9d993/run-build-script-build-script-build`
 
 Caused by:
     No such file or directory (os error 2)
@@ -184,8 +184,8 @@ Stack backtrace:
   17: std::rt::lang_start::<()>::{closure#0}
   18: std::rt::lang_start_internal
   19: _main
-   0.722699042s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/build.rs", Edition2024) }
-   0.722706375s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-9d910fd9dc27f6c2/run-build-script-build-script-build`
+   0.894946083s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/build.rs", Edition2024) }
+   0.894952916s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-9d910fd9dc27f6c2/run-build-script-build-script-build`
 
 Caused by:
     No such file or directory (os error 2)
@@ -210,8 +210,8 @@ Stack backtrace:
   16: std::rt::lang_start::<()>::{closure#0}
   17: std::rt::lang_start_internal
   18: _main
-   0.723140750s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/Check { test: true }/TargetInner { name: "esp32-tx-node", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/src/main.rs", Edition2024) }
-   0.723148292s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-67ab983242e940b5/test-bin-esp32-tx-node`
+   0.895503541s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint: fingerprint error for esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node)/Check { test: true }/TargetInner { name: "esp32-tx-node", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node/src/main.rs", Edition2024) }
+   0.895511041s  INFO prepare_target{force=false package_id=esp32-tx-node v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32-tx-node) target="esp32-tx-node"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32-tx-node-67ab983242e940b5/test-bin-esp32-tx-node`
 
 Caused by:
     No such file or directory (os error 2)
@@ -234,8 +234,8 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.733750333s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/Check { test: false }/TargetInner { name: "esp32s3-gateway", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/src/main.rs", Edition2024) }
-   0.733766917s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-2908423de8ad4cda/bin-esp32s3-gateway`
+   0.907117833s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/Check { test: false }/TargetInner { name: "esp32s3-gateway", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/src/main.rs", Edition2024) }
+   0.907136541s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-2908423de8ad4cda/bin-esp32s3-gateway`
 
 Caused by:
     No such file or directory (os error 2)
@@ -258,8 +258,8 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.734563583s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/build.rs", Edition2024) }
-   0.734573208s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-8951b5c80168a3b4/run-build-script-build-script-build`
+   0.908019666s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/build.rs", Edition2024) }
+   0.908027958s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-8951b5c80168a3b4/run-build-script-build-script-build`
 
 Caused by:
     No such file or directory (os error 2)
@@ -284,8 +284,8 @@ Stack backtrace:
   16: std::rt::lang_start::<()>::{closure#0}
   17: std::rt::lang_start_internal
   18: _main
-   0.735068708s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/Check { test: true }/TargetInner { name: "esp32s3-gateway", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/src/main.rs", Edition2024) }
-   0.735081333s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-fc54c1f7af5eceaa/test-bin-esp32s3-gateway`
+   0.908737083s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint: fingerprint error for esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway)/Check { test: true }/TargetInner { name: "esp32s3-gateway", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway/src/main.rs", Edition2024) }
+   0.908748291s  INFO prepare_target{force=false package_id=esp32s3-gateway v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/firmware/esp32s3-gateway) target="esp32s3-gateway"}: cargo::core::compiler::fingerprint:     err: failed to read `/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/esp32s3-gateway-fc54c1f7af5eceaa/test-bin-esp32s3-gateway`
 
 Caused by:
     No such file or directory (os error 2)
@@ -308,16 +308,20 @@ Stack backtrace:
   14: std::rt::lang_start::<()>::{closure#0}
   15: std::rt::lang_start_internal
   16: _main
-   0.746199083s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: dependency on `firmware_software_sim` is newer than we are 1782437983.719110421s > 1782437911.392447031s "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator"
-   0.746415792s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: false }/TargetInner { ..: lib_target("hil_simulator", ["lib"], "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/lib.rs", Edition2024) }
-   0.746424583s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDependency { unit: UnitIndex(159), dep_mtime: FileTime { seconds: 1782437983, nanos: 719110421 }, max_mtime: FileTime { seconds: 1782437911, nanos: 392447031 } })
-   0.756702333s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: dependency on `firmware_software_sim` is newer than we are 1782437983.719110421s > 1782437911.392406615s "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator"
-   0.756900000s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: true }/TargetInner { ..: lib_target("hil_simulator", ["lib"], "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/lib.rs", Edition2024) }
-   0.756910542s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDependency { unit: UnitIndex(159), dep_mtime: FileTime { seconds: 1782437983, nanos: 719110421 }, max_mtime: FileTime { seconds: 1782437911, nanos: 392406615 } })
-   0.758365042s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: false }/TargetInner { name: "hil-simulator", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/main.rs", Edition2024) }
-   0.758372417s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { unit: UnitIndex(205) })
-   0.759528208s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: true }/TargetInner { name: "hil-simulator", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/main.rs", Edition2024) }
-   0.759534833s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { unit: UnitIndex(205) })
+   0.921052833s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: stale: changed "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/gwbackend.rs"
+   0.921059625s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:           (vs) "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/hil-simulator-cc0d468d4ea43c57/dep-lib-hil_simulator"
+   0.921062625s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1782438573, nanos: 506587331 } < FileTime { seconds: 1782439267, nanos: 999945469 }
+   0.921316166s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: false }/TargetInner { ..: lib_target("hil_simulator", ["lib"], "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/lib.rs", Edition2024) }
+   0.921326333s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/hil-simulator-cc0d468d4ea43c57/dep-lib-hil_simulator", reference_mtime: FileTime { seconds: 1782438573, nanos: 506587331 }, stale: "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/gwbackend.rs", stale_mtime: FileTime { seconds: 1782439267, nanos: 999945469 } }))
+   0.931739916s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: stale: changed "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/gwbackend.rs"
+   0.931745541s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:           (vs) "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/hil-simulator-241da82b59b69096/dep-test-lib-hil_simulator"
+   0.931748416s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 1782438573, nanos: 506782660 } < FileTime { seconds: 1782439267, nanos: 999945469 }
+   0.931984666s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: true }/TargetInner { ..: lib_target("hil_simulator", ["lib"], "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/lib.rs", Edition2024) }
+   0.931992708s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil_simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/target/debug/.fingerprint/hil-simulator-241da82b59b69096/dep-test-lib-hil_simulator", reference_mtime: FileTime { seconds: 1782438573, nanos: 506782660 }, stale: "/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/gwbackend.rs", stale_mtime: FileTime { seconds: 1782439267, nanos: 999945469 } }))
+   0.933444708s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: false }/TargetInner { name: "hil-simulator", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/main.rs", Edition2024) }
+   0.933452125s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { unit: UnitIndex(205) })
+   0.935094708s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)/Check { test: true }/TargetInner { name: "hil-simulator", doc: true, ..: with_path("/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator/src/main.rs", Edition2024) }
+   0.935101583s  INFO prepare_target{force=false package_id=hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator) target="hil-simulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleDepFingerprint { unit: UnitIndex(205) })
    Compiling esp-idf-sys v0.37.2
     Checking hil-simulator v0.1.0 (/Users/dennis_leedennis_lee/Documents/GitHub/SDR/hil-simulator)
 warning: esp-idf-sys@0.37.2: could not identify the root crate and `ESP_IDF_SYS_ROOT_CRATE` not specified
@@ -395,4 +399,3 @@ Caused by:
                at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library/std/src/rt.rs:171:5
     20: std::rt::lang_start
     21: _main
-warning: build failed, waiting for other jobs to finish...

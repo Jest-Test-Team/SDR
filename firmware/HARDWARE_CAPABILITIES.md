@@ -71,11 +71,36 @@ HIL simulator:
 | `CMD_SNMP_GET` | TCP JSON to endpoint | Read a simulated OID |
 | `CMD_DEAUTH_STA` | `esp_wifi_deauth_sta` | Kick a station by MAC |
 | `CMD_SYS_HEALTH` | `esp_get_free_heap_size` | Report heap / link / station count |
-| `CMD_REGISTER_NODE` | AP STA-join event | Track a downstream endpoint |
+| `CMD_REGISTER_NODE` | AP STA-join event (sim-only) | Track a downstream endpoint |
+| `CMD_ENROLL_DEVICE` | `GwMsg::EnrollReq` → on-device registry | Create identity, issue credential (`pending`) |
+| `CMD_CLAIM_DEVICE` | `GwMsg::ClaimReq` → on-device registry | Activate an enrolled device (`active`) |
+| `CMD_ROTATE_CREDENTIAL` | `GwMsg::RotateReq` → on-device registry | Reissue credential, bump version |
+| `CMD_REVOKE_DEVICE` | `GwMsg::RevokeReq` → on-device registry | Revoke identity (`revoked`) |
 
 The HIL simulator exposes these over `GET /api/v1/gateway` and
 `POST /api/v1/gateway/command`, and the web dashboard's **Secure Gateway** page
 drives them.
+
+### On-device provisioning (real boards)
+
+Provisioning is a **real on-device operation**, not sim-only. The ESP32 gateway
+(`esp32-tx-node` crate) holds the device registry in RAM and answers four new
+`GwMsg` requests, replying `ProvisionResp { device_id, state, fingerprint,
+version, ok }`. The state machine is `pending → active → revoked`, with negative
+paths rejected (duplicate enroll, claim of a non-pending device, rotate after
+revoke). The ESP32-S3 node (`esp32s3-gateway` crate) accepts these USB lines and
+relays them over ESP-NOW, printing replies as `GWRESP PROVISION ...`:
+
+| USB line | ESP-NOW request |
+| --- | --- |
+| `GW,ENROLL,<device_id>,<mac>` | `GwMsg::EnrollReq` |
+| `GW,CLAIM,<device_id>` | `GwMsg::ClaimReq` |
+| `GW,ROTATE,<device_id>` | `GwMsg::RotateReq` |
+| `GW,REVOKE,<device_id>` | `GwMsg::RevokeReq` |
+
+The credential fingerprint is a deterministic FNV-1a stand-in (no real crypto
+yet). In hardware mode the dashboard's provisioning panel drives the boards;
+`hil-simulator` parses `GWRESP PROVISION` lines into `GatewaySnapshot.devices`.
 
 This crate is for protocol generation and test harnesses. It does not replace
 the embedded ESP32 firmware images.

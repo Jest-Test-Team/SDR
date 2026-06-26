@@ -71,6 +71,32 @@ pub enum GwMsg {
         value: Option<String>,
         ok: bool,
     },
+    /// CMD_ENROLL_DEVICE: create a device identity and issue its first credential.
+    EnrollReq {
+        device_id: String,
+        mac: String,
+    },
+    /// CMD_CLAIM_DEVICE: activate an enrolled device.
+    ClaimReq {
+        device_id: String,
+    },
+    /// CMD_ROTATE_CREDENTIAL: reissue the credential for an active device.
+    RotateReq {
+        device_id: String,
+    },
+    /// CMD_REVOKE_DEVICE: revoke a device identity.
+    RevokeReq {
+        device_id: String,
+    },
+    /// Reply to any provisioning request. `state` is one of
+    /// `pending` / `active` / `revoked` / `unknown`.
+    ProvisionResp {
+        device_id: String,
+        state: String,
+        fingerprint: String,
+        version: u32,
+        ok: bool,
+    },
 }
 
 /// ESP-NOW framing: `[GW_LINK_VENDOR_ID][postcard || crc16_le]`.
@@ -152,6 +178,30 @@ mod tests {
         roundtrip(GwMsg::SnmpResp {
             oid: "1.3.6.1.4.1.custom.relay".to_string(),
             value: Some("on".to_string()),
+            ok: true,
+        });
+    }
+
+    #[test]
+    fn provisioning_roundtrip() {
+        roundtrip(GwMsg::EnrollReq {
+            device_id: "dev-001".to_string(),
+            mac: "AA:BB:CC:00:00:01".to_string(),
+        });
+        roundtrip(GwMsg::ClaimReq {
+            device_id: "dev-001".to_string(),
+        });
+        roundtrip(GwMsg::RotateReq {
+            device_id: "dev-001".to_string(),
+        });
+        roundtrip(GwMsg::RevokeReq {
+            device_id: "dev-001".to_string(),
+        });
+        roundtrip(GwMsg::ProvisionResp {
+            device_id: "dev-001".to_string(),
+            state: "active".to_string(),
+            fingerprint: "cred-0123456789abcdef".to_string(),
+            version: 2,
             ok: true,
         });
     }

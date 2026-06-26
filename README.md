@@ -149,7 +149,45 @@ port can only be held by one process — close any espflash monitor first.
 ./scripts/sim_node.py GW,SNMP_GET,1.3.6.1.4.1.custom.relay
 ./scripts/sim_node.py GW,TOGGLE          # GATEWAY_ISOLATED_NET disappears from Wi-Fi scan
 ./scripts/sim_node.py SIM,SEND,1
+
+# On-device device provisioning (registry lives on the ESP32 gateway, in RAM):
+./scripts/sim_node.py GW,ENROLL,dev-001,AA:BB:CC:00:00:01   # -> state=pending version=1
+./scripts/sim_node.py GW,CLAIM,dev-001                      # -> state=active
+./scripts/sim_node.py GW,ROTATE,dev-001                     # -> version=2, new fingerprint
+./scripts/sim_node.py GW,REVOKE,dev-001                     # -> state=revoked
 ```
+
+### One-shot provisioning demo + self-check
+
+`scripts/provision_demo.sh` runs the whole enroll → claim → rotate → revoke
+lifecycle (plus rejection cases) and verifies each step. By default it drives the
+`hil-simulator` backend HTTP API — the **same path the web dashboard uses** — so
+it works against either a REAL HARDWARE backend (driving the boards) or a
+SIMULATION backend:
+
+```bash
+# API mode (start the backend first, hardware or simulation):
+HIL_GW_SERIAL=auto ./scripts/run_hil_dashboard.sh   # or: cargo run -p hil-simulator --release
+./scripts/provision_demo.sh                         # -> PASS=7 FAIL=0
+
+# Direct-USB mode (no backend/dashboard running; asserts on board GWRESP lines):
+./scripts/provision_demo.sh --usb
+```
+
+### Full flow in one command
+
+`scripts/provision_full_flow.sh` does everything: it starts the backend
+(auto-detecting the S3 board for **REAL HARDWARE** mode, or falling back to
+simulation), waits for the API, runs the self-check, and stops the backend.
+
+```bash
+./scripts/provision_full_flow.sh              # hardware auto-detect, run demo, stop
+./scripts/provision_full_flow.sh --sim        # force simulation (no boards needed)
+./scripts/provision_full_flow.sh --dashboard  # after a passing demo, open the live UI
+```
+
+Hardware mode needs both boards flashed and nothing else holding the S3 USB port
+(close any espflash monitor or `sim_node.py` first).
 
 Proof it is real hardware (not the sim): `free_heap` is a live, changing number
 (e.g. `221272`), and `GW,TOGGLE` makes the `GATEWAY_ISOLATED_NET` AP physically
