@@ -22,6 +22,8 @@ export function GatewayPanel() {
   const [value, setValue] = useState("true");
   const [mac, setMac] = useState("AA:BB:CC:DD:EE:FF");
   const [ip, setIp] = useState("192.168.4.3");
+  const [deviceId, setDeviceId] = useState("dev-001");
+  const [deviceMac, setDeviceMac] = useState("AA:BB:CC:00:00:01");
 
   const refresh = useCallback(() => {
     fetchGateway()
@@ -233,6 +235,85 @@ export function GatewayPanel() {
           )}
         </div>
       )}
+
+      <div className="panel">
+        <h3>裝置佈建 / Device Provisioning</h3>
+        <p className="subtitle">
+          enroll（簽發身份與憑證）→ claim（啟用上線）→ rotate（輪替憑證）→ revoke（撤銷下線）
+        </p>
+        <div className="controls">
+          <label>
+            <span>Device ID</span>
+            <input className="mono" value={deviceId} onChange={(e) => setDeviceId(e.target.value)} />
+          </label>
+          <label>
+            <span>MAC</span>
+            <input className="mono" value={deviceMac} onChange={(e) => setDeviceMac(e.target.value)} />
+          </label>
+        </div>
+        <div className="controls" style={{ marginTop: "1rem" }}>
+          <button
+            className="trigger-btn"
+            type="button"
+            disabled={busy}
+            onClick={() => run({ command: "enroll_device", device_id: deviceId, mac: deviceMac })}
+          >
+            CMD_ENROLL_DEVICE
+          </button>
+          <button
+            className="trigger-btn"
+            type="button"
+            disabled={busy}
+            onClick={() => run({ command: "claim_device", device_id: deviceId })}
+          >
+            CMD_CLAIM_DEVICE
+          </button>
+          <button
+            className="trigger-btn secondary"
+            type="button"
+            disabled={busy}
+            onClick={() => run({ command: "rotate_credential", device_id: deviceId })}
+          >
+            CMD_ROTATE_CREDENTIAL
+          </button>
+          <button
+            className="trigger-btn secondary"
+            type="button"
+            disabled={busy}
+            onClick={() => run({ command: "revoke_device", device_id: deviceId })}
+          >
+            CMD_REVOKE_DEVICE
+          </button>
+        </div>
+        <table style={{ marginTop: "1rem" }}>
+          <thead>
+            <tr>
+              <th>Device ID</th>
+              <th>MAC</th>
+              <th>State</th>
+              <th>Credential</th>
+              <th>Ver</th>
+            </tr>
+          </thead>
+          <tbody>
+            {snap?.devices?.length ? (
+              snap.devices.map((d) => (
+                <tr key={d.device_id}>
+                  <td className="mono">{d.device_id}</td>
+                  <td className="mono">{d.mac}</td>
+                  <td>{d.state}</td>
+                  <td className="mono">{d.credential_fingerprint}</td>
+                  <td>{d.credential_version}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5}>尚無佈建裝置 / No provisioned devices</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       <div className="panel">
         <h3>下行端點 / Downstream Endpoints</h3>

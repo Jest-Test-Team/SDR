@@ -6,7 +6,8 @@
 //! SNMP, deauth, system health).
 
 pub use firmware_software_sim::gateway::{
-    CMD_DEAUTH_STA, CMD_NET_TOGGLE_DOWNSTREAM, CMD_REGISTER_NODE, CMD_SNMP_GET, CMD_SNMP_SET,
-    CMD_SYS_HEALTH, GatewayCommand, GatewayResponse, GatewaySim, GatewaySnapshot, NodeInfo,
-    OidEntry, SnmpResponse, WifiMode,
+    CMD_CLAIM_DEVICE, CMD_DEAUTH_STA, CMD_ENROLL_DEVICE, CMD_NET_TOGGLE_DOWNSTREAM,
+    CMD_REGISTER_NODE, CMD_REVOKE_DEVICE, CMD_ROTATE_CREDENTIAL, CMD_SNMP_GET, CMD_SNMP_SET,
+    CMD_SYS_HEALTH, DeviceIdentity, GatewayCommand, GatewayResponse, GatewaySim, GatewaySnapshot,
+    NodeInfo, OidEntry, ProvisioningState, SnmpResponse, WifiMode,
 };

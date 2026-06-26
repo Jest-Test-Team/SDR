@@ -93,6 +93,16 @@ export interface OidEntry {
   value: string;
 }
 
+export type ProvisioningState = "pending" | "active" | "revoked";
+
+export interface DeviceIdentity {
+  device_id: string;
+  mac: string;
+  state: ProvisioningState;
+  credential_fingerprint: string;
+  credential_version: number;
+}
+
 export interface GatewaySnapshot {
   wifi_mode: WifiMode;
   downstream_online: boolean;
@@ -101,6 +111,7 @@ export interface GatewaySnapshot {
   command_count: number;
   oids: OidEntry[];
   nodes: NodeInfo[];
+  devices: DeviceIdentity[];
   command_log: string[];
 }
 
@@ -135,7 +146,11 @@ export type GatewayCommand =
   | { command: "snmp_get"; oid: string }
   | { command: "deauth_sta"; mac: string }
   | { command: "sys_health" }
-  | { command: "register_node"; mac: string; ip: string };
+  | { command: "register_node"; mac: string; ip: string }
+  | { command: "enroll_device"; device_id: string; mac: string }
+  | { command: "claim_device"; device_id: string }
+  | { command: "rotate_credential"; device_id: string }
+  | { command: "revoke_device"; device_id: string };
 
 export interface FirmwareConfigResponse {
   ok: boolean;

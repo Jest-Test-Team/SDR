@@ -220,6 +220,7 @@ fn default_hw_snapshot() -> GatewaySnapshot {
         command_count: 0,
         oids: Vec::new(),
         nodes: Vec::new(),
+        devices: Vec::new(),
         command_log: Vec::new(),
     }
 }
@@ -232,8 +233,13 @@ fn command_to_line(command: &GatewayCommand) -> Option<String> {
         GatewayCommand::SnmpGet { oid } => Some(format!("GW,SNMP_GET,{oid}")),
         GatewayCommand::DeauthSta { .. } => Some("GW,DEAUTH".to_string()),
         GatewayCommand::SysHealth => Some("GW,HEALTH".to_string()),
-        // No on-device equivalent: registration is a simulation concept.
-        GatewayCommand::RegisterNode { .. } => None,
+        // No on-device equivalent: registration and provisioning are
+        // simulation / control-plane concepts, not raw ESP-NOW operations.
+        GatewayCommand::RegisterNode { .. }
+        | GatewayCommand::EnrollDevice { .. }
+        | GatewayCommand::ClaimDevice { .. }
+        | GatewayCommand::RotateCredential { .. }
+        | GatewayCommand::RevokeDevice { .. } => None,
     }
 }
 
