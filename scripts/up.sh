@@ -71,11 +71,12 @@ PIDS=()
 cleanup() {
   note "shutting down"
   for p in ${PIDS[@]+"${PIDS[@]}"}; do kill "$p" 2>/dev/null || true; done
-  # run_local.sh / pipelinectl start their own children; make sure they go too
-  pkill -f 'scripts/pipelinectl.py' 2>/dev/null || true
-  pkill -f 'target/release/edge-gateway' 2>/dev/null || true
-  pkill -f 'target/release/control-plane' 2>/dev/null || true
-  pkill -f 'target/release/hil-simulator' 2>/dev/null || true
+  if [[ "$CONTROL" -ne 1 ]]; then
+    # run_local.sh starts its own children; make sure they go too.
+    pkill -f 'target/release/edge-gateway' 2>/dev/null || true
+    pkill -f 'target/release/control-plane' 2>/dev/null || true
+    pkill -f 'target/release/hil-simulator' 2>/dev/null || true
+  fi
 }
 trap cleanup EXIT INT TERM
 
@@ -133,6 +134,39 @@ wait_pipelinectl() {
   return 1
 }
 
+port_busy() {
+  lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1
+}
+
+configure_pipelinectl_address() {
+  local requested="${PIPELINECTL_PORT:-8099}"
+  local port
+
+  if [[ -n "${PIPELINECTL_PORT:-}" ]]; then
+    port="$requested"
+  else
+    for port in 8099 8100 8101 8102 8103 8104 8105 8106 8107 8108 8109; do
+      if ! port_busy "$port"; then
+        break
+      fi
+    done
+  fi
+
+  if port_busy "$port"; then
+    echo "ERROR: no free pipelinectl control port found (tried 8099-8109)." >&2
+    echo "       Set PIPELINECTL_PORT to a free local port and retry." >&2
+    exit 1
+  fi
+
+  export PIPELINECTL_PORT="$port"
+  export PIPELINECTL_URL="${PIPELINECTL_URL:-http://127.0.0.1:${PIPELINECTL_PORT}}"
+  export PIPELINECTL_TOKEN_FILE="${PIPELINECTL_TOKEN_FILE:-/tmp/sdr-pipelinectl-${PIPELINECTL_PORT}.token}"
+
+  if [[ "$PIPELINECTL_PORT" != "$requested" ]]; then
+    echo "   pipelinectl port ${requested} is busy; using fallback :${PIPELINECTL_PORT}"
+  fi
+}
+
 start_dashboard() {
   cd "$ROOT/web/hil-dashboard"
   export NEXT_PUBLIC_HIL_WS_URL="ws://127.0.0.1:${HIL_PORT}/ws/live"
@@ -146,8 +180,9 @@ start_dashboard() {
 if [[ "$CONTROL" -eq 1 ]]; then
   # ---- CONTROLLED: pipelinectl supervises the backend; button switches live --
   INIT_PIPE="$PIPELINE"; [[ -n "$GW_SERIAL" ]] || INIT_PIPE="sim"
+  configure_pipelinectl_address
   note "starting pipelinectl supervisor (initial pipeline: $INIT_PIPE)"
-  ./scripts/pipelinectl.py --start "$INIT_PIPE" >/tmp/sdr-pipelinectl.log 2>&1 &
+  ./scripts/pipelinectl.py --port "$PIPELINECTL_PORT" --start "$INIT_PIPE" >/tmp/sdr-pipelinectl.log 2>&1 &
   ctl_pid=$!
   PIDS+=("$ctl_pid")
   wait_pipelinectl "$ctl_pid" || exit 1

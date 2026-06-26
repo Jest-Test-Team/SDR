@@ -15,40 +15,57 @@ export function PipelineSwitch() {
   const pathname = usePathname();
   const router = useRouter();
   const [ctlUp, setCtlUp] = useState(false);
+  const [currentPipeline, setCurrentPipeline] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
     fetch("/api/control/status", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(() => alive && setCtlUp(true))
-      .catch(() => alive && setCtlUp(false));
+      .then((status) => {
+        if (!alive) return;
+        setCtlUp(true);
+        setCurrentPipeline(status.pipeline ?? null);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setCtlUp(false);
+        setCurrentPipeline(null);
+      });
     return () => {
       alive = false;
     };
   }, [pathname]);
 
   const onGateway = pathname.startsWith("/gateway");
-  const target = onGateway
+  const pagePipeline = onGateway ? "gateway" : "telemetry";
+  const pageTarget = onGateway
+    ? { href: "/gateway", pipeline: "gateway", label: "切換到安全閘道 / Secure Gateway", cmd: "./scripts/up.sh" }
+    : { href: "/", pipeline: "telemetry", label: "切換到即時遙測 / Live Telemetry", cmd: "./scripts/up.sh --telemetry" };
+  const otherTarget = onGateway
     ? { href: "/", pipeline: "telemetry", label: "切換到即時遙測 / Live Telemetry", cmd: "./scripts/up.sh --telemetry" }
     : { href: "/gateway", pipeline: "gateway", label: "切換到安全閘道 / Secure Gateway", cmd: "./scripts/up.sh" };
+  const target = ctlUp && currentPipeline && currentPipeline !== pagePipeline ? pageTarget : otherTarget;
 
   const switchPipeline = useCallback(async () => {
     setBusy(true);
     try {
-      await fetch("/api/control/switch", {
+      const response = await fetch("/api/control/switch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pipeline: target.pipeline }),
       });
+      if (!response.ok) throw new Error(`pipeline switch failed: ${response.status}`);
+      setCurrentPipeline(target.pipeline);
+      // Give the backend a moment to start, then navigate to the matching page.
+      setTimeout(() => {
+        setBusy(false);
+        router.push(target.href);
+      }, 1500);
     } catch {
-      /* ignore — navigate anyway */
-    }
-    // Give the backend a moment to start, then navigate to the matching page.
-    setTimeout(() => {
+      setCtlUp(false);
       setBusy(false);
-      router.push(target.href);
-    }, 1500);
+    }
   }, [router, target.href, target.pipeline]);
 
   if (pathname.startsWith("/about")) return null;
