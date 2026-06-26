@@ -619,6 +619,35 @@ body {
   color: #fff;
 }
 
+.pipeline-switch {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  text-decoration: none;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+}
+
+.pipeline-switch:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.pipeline-switch-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pipeline-switch-cmd {
+  font-size: 0.68rem;
+  opacity: 0.75;
+  font-family: var(--font-mono, monospace);
+}
+
 .command-log {
   list-style: none;
   margin: 0;
