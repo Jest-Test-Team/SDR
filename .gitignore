@@ -16,3 +16,4 @@ target/.rustc_info.json
 data/telemetry.db/db
 /target/xtensa-esp32-espidf/debug
 instruction.md
+成果與落差說明.md
