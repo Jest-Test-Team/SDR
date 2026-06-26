@@ -234,6 +234,22 @@ path with no hardware.
 
 ## Quick Start
 
+### One command (build-if-needed + up, boards in the loop)
+
+```bash
+./scripts/up.sh            # builds only what changed, starts control-plane +
+                           # hil-simulator (HARDWARE mode, auto-detects the S3
+                           # board) + dashboard, then opens http://localhost:3001
+./scripts/up.sh --sim      # no boards (simulation)
+./scripts/up.sh --flash    # flash both boards first, then up
+./scripts/up.sh --rebuild  # force a clean FE/BE rebuild
+./scripts/up.sh --docker   # build+run FE/BE as Docker images (board-less)
+```
+
+Ctrl+C tears the whole stack down. Hardware mode needs the ESP toolchain
+(`source ~/export-esp.sh`) and a free S3 usbmodem port (close espflash monitors
+first). The manual steps below are for when you need finer control.
+
 ### Prerequisites
 
 - Rust 1.85+
